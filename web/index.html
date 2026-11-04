@@ -1342,7 +1342,7 @@ body.dark-mode .conversation{
   </header>
 
   <div class="home-body">
-    <!-- Espace publicitaire : visuel à gérer depuis le dashboard administrateur -->
+    <!-- Espace publicitaire de la plateforme -->
     <div class="home-ad-slot ad-carousel" id="homeAdCarousel" role="region" aria-label="Publicités BUILDTRACE">
       <span class="ad-label">PUBLICITÉ</span><div class="ad-copy"><strong id="adTitle">Les solutions pour vos chantiers</strong><small id="adDescription">Découvrez les matériaux et équipements près de chez vous.</small></div>
       <div class="ad-controls"><button type="button" onclick="changeAd(-1)" aria-label="Publicité précédente">‹</button><span id="adDots"></span><button type="button" onclick="changeAd(1)" aria-label="Publicité suivante">›</button></div>
@@ -1727,8 +1727,7 @@ body.dark-mode .conversation{
   <form class="chat-compose" onsubmit="sendChatMessage(event)"><input id="chatInput" placeholder="Écrire un message..." autocomplete="off" required><button type="submit" aria-label="Envoyer">➤</button></form>
 </div>
 
-<!-- Dashboard privé BUILDTRACE -->
-<!-- Espace administrateur retiré de l’application utilisateur : interface séparée à créer. -->
+<!-- L’interface publique ne contient aucun espace d’administration. -->
 <div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()">
   <div class="sheet">
     <h3>Que souhaitez-vous faire ?</h3>
