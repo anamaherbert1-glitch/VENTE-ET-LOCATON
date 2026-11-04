@@ -2122,7 +2122,7 @@ body.dark-mode .search-bottom .ni.on{
 <div class="screen detail-screen" id="s-detail">
   <div class="detail-top" id="detailHero" style="background-image:url('https://images.unsplash.com/photo-1590725140246-20acddi7e9a8?auto=format&fit=crop&w=900&q=85')">
     <div class="detail-topbar">
-      <button class="detail-icon" onclick="go('market')" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6M9 12h12"/></svg></button>
+      <button class="detail-icon" onclick="go(selectedMarketProduct.returnTo||'market')" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6M9 12h12"/></svg></button>
       <div style="display:flex;gap:8px"><button class="detail-icon" aria-label="Partager" onclick="alert('Le partage sera activé ultérieurement.')"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.7 6.6-4.4m-6.6 7 6.6 4.4"/></svg></button><button class="detail-icon" aria-label="Favori" onclick="this.classList.toggle('liked')"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 00-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 00-.1-7.8Z"/></svg></button></div>
     </div>
     <div class="detail-photo-dots"><i></i><i></i><i></i><i></i></div>
@@ -2218,15 +2218,26 @@ function toggleMarketSort(){
   [...grid.children].reverse().forEach(card=>grid.appendChild(card));
 }
 let selectedMarketProduct={name:'Briques rouges',price:'45 000 FCFA',kind:'À vendre · Lomé'};
-function openMarketProduct(name,price,kind,listing=null){
-  selectedMarketProduct={name,price,kind,...(listing||{})};
-  window.BUILDTRACE_SELECTED_LISTING=selectedMarketProduct;
-  document.getElementById('detailName').textContent=name;
-  document.getElementById('detailPrice').textContent=price;
-  document.getElementById('detailKind').textContent=kind;
-  document.getElementById('chatProductName').textContent=name;
-  document.getElementById('chatProductPrice').textContent=price;
-  go('detail');
+async function openMarketProduct(name,price,kind,listing=null){
+  const activeScreen=document.querySelector('.screen.active')?.id||'s-market';
+  selectedMarketProduct={name,price,kind,...(listing||{}),returnTo:activeScreen==='s-home'?'home':'market'};
+  if(listing?.id){const result=await sb.from('listings').select('*').eq('id',listing.id).maybeSingle();if(!result.error&&result.data)selectedMarketProduct={...selectedMarketProduct,...result.data};else if(result.error)console.warn('Détails annonce:',result.error);}
+  const p=selectedMarketProduct;
+  const set=(id,value,fallback='Non renseigné')=>{const node=document.getElementById(id);if(node)node.textContent=value===0?'0':(value||fallback);};
+  const amount=p.listing_type==='rent'?p.rental_price_xof:p.sale_price_xof;
+  const displayPrice=amount!=null?Number(amount).toLocaleString('fr-FR')+' FCFA'+(p.listing_type==='rent'?' / '+(p.rental_period||'jour'):''):price;
+  const typeLabel=p.listing_type==='rent'?'À louer':p.listing_type==='both'?'Vente & location':p.listing_type==='sale'?'À vendre':kind;
+  p.name=p.title||name;p.price=displayPrice;p.kind=typeLabel+' · '+(p.location||'');window.BUILDTRACE_SELECTED_LISTING=p;
+  set('detailName',p.name);set('detailPrice',displayPrice);set('detailKind',p.kind);
+  set('detailDescription',p.description||p.details||'Aucune description détaillée fournie par le vendeur.');
+  set('detailLocation',p.location||'Localisation non précisée');set('detailCondition',p.condition||'Non précisé');
+  set('detailQuantity',p.quantity||'Non précisée');set('detailDimensions',p.dimensions||'Non précisées');
+  const hero=document.getElementById('detailHero');if(hero)hero.style.backgroundImage=p.photo_urls?.[0]?'url("'+p.photo_urls[0]+'")':'none';
+  const seller=document.getElementById('detailSeller'),sellerSub=seller?.parentElement?.querySelector('small');
+  if(seller)seller.textContent='Chargement du vendeur…';
+  if(p.owner_id){const result=await sb.from('profiles').select('full_name,company_name,phone,city').eq('id',p.owner_id).maybeSingle();const profile=result.data;const sellerName=profile?.company_name||profile?.full_name||'Vendeur BUILDTRACE';if(seller)seller.textContent=sellerName;if(sellerSub)sellerSub.textContent=profile?.phone?'Téléphone : '+profile.phone:'Vendeur sur BUILDTRACE';p.seller_name=sellerName;p.seller_phone=profile?.phone||null;}
+  else{if(seller)seller.textContent='Vendeur non renseigné';if(sellerSub)sellerSub.textContent='Annonce de démonstration';}
+  set('chatProductName',p.name);set('chatProductPrice',displayPrice);go('detail');
 }
 function startProductChat(){
   document.getElementById('chatProductName').textContent=selectedMarketProduct.name;
