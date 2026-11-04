@@ -2245,11 +2245,12 @@ window.changeDetailPhoto=delta=>{
 async function openMarketProduct(name,price,kind,listing=null){
   const activeScreen=document.querySelector('.screen.active')?.id||'s-market';
   selectedMarketProduct={name,price,kind,...(listing||{}),returnTo:activeScreen==='s-home'?'home':'market'};
+  let sellerProfile=null;
   if(listing?.id){
-    const result=await sb.from('listings').select('*').eq('id',listing.id).maybeSingle();
-    if(result.error)throw result.error;
-    if(result.data)selectedMarketProduct={...selectedMarketProduct,...result.data};
-    if(!result.data)throw Error('Cette annonce n’est plus disponible.');
+    if(typeof window.BUILDTRACE_GET_LISTING_DETAIL!=='function')throw Error('Le service de détails est momentanément indisponible. Réessayez.');
+    const result=await window.BUILDTRACE_GET_LISTING_DETAIL(listing.id);
+    selectedMarketProduct={...selectedMarketProduct,...result.listing};
+    sellerProfile=result.profile||null;
   }
   const p=selectedMarketProduct;
   const set=(id,value,fallback='Non renseigné')=>{const node=document.getElementById(id);if(node)node.textContent=value===0?'0':(value??'')!==''?String(value):fallback;};
@@ -2270,13 +2271,10 @@ async function openMarketProduct(name,price,kind,listing=null){
   if(seller)seller.textContent='Chargement du vendeur…';
   if(sellerSub)sellerSub.textContent='Profil vendeur BUILDTRACE';
   if(p.owner_id){
-    const result=await sb.from('profiles').select('full_name,company_name,phone,city').eq('id',p.owner_id).maybeSingle();
-    if(result.error)console.warn('Profil vendeur indisponible :',result.error.message);
-    const profile=result.data;
-    const sellerName=profile?.company_name||profile?.full_name||'Vendeur BUILDTRACE';
+    const sellerName=sellerProfile?.company_name||sellerProfile?.full_name||'Vendeur BUILDTRACE';
     if(seller)seller.textContent=sellerName;
-    if(sellerSub)sellerSub.textContent=[profile?.phone?'Téléphone : '+profile.phone:null,profile?.city].filter(Boolean).join(' · ')||'Vendeur sur BUILDTRACE';
-    p.seller_name=sellerName;p.seller_phone=profile?.phone||null;
+    if(sellerSub)sellerSub.textContent=[sellerProfile?.phone?'Téléphone : '+sellerProfile.phone:null,sellerProfile?.city].filter(Boolean).join(' · ')||'Vendeur sur BUILDTRACE';
+    p.seller_name=sellerName;p.seller_phone=sellerProfile?.phone||null;
   }else{
     if(seller)seller.textContent='Vendeur non renseigné';
     if(sellerSub)sellerSub.textContent='Annonce de démonstration';
@@ -2487,6 +2485,18 @@ async function openConversation(id){
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const sb=createClient('https://jeingfrujkqebbmdwpzg.supabase.co','sb_publishable_lKVAHVSLrx2yZlvx9ehKUA_usHr5h3t',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}});
 let user=null, mode='signup'; const el=id=>document.getElementById(id);
+window.BUILDTRACE_GET_LISTING_DETAIL=async listingId=>{
+  const {data:listing,error}=await sb.from('listings').select('*').eq('id',listingId).eq('status','published').maybeSingle();
+  if(error)throw error;
+  if(!listing)throw Error('Cette annonce n’est plus disponible.');
+  let profile=null;
+  if(listing.owner_id){
+    const result=await sb.from('profiles').select('full_name,company_name,phone,city').eq('id',listing.owner_id).maybeSingle();
+    if(result.error)console.warn('Profil vendeur indisponible :',result.error.message);
+    profile=result.data||null;
+  }
+  return {listing,profile};
+};
 function status(msg,kind=''){const n=el('authStatus');if(n){n.textContent=msg;n.className='inline-status '+kind;}}
 window.setMode=m=>{mode=m==='l'?'login':'signup';const row=el('authFullName').closest('.fg');row.style.display=mode==='signup'?'':'none';el('authFullName').required=mode==='signup';el('asub').textContent=mode==='signup'?'Créer mon compte':'Se connecter';el('abox').classList.toggle('mode-r',mode==='signup');el('tl').classList.toggle('on',mode==='login');el('tr').classList.toggle('on',mode==='signup');el('afoot').innerHTML=mode==='signup'?'Vous avez déjà un compte ? <a href="#" onclick="setMode(\'l\');return false">Se connecter</a>':'Pas encore de compte ? <a href="#" onclick="setMode(\'r\');return false">Créer un compte</a>';status('');};
 window.doAuth=async e=>{
