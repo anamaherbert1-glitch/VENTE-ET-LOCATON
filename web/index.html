@@ -2566,8 +2566,7 @@ async function openConversation(id){
 }
 </script>
 <script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-const sb=createClient('https://jeingfrujkqebbmdwpzg.supabase.co','sb_publishable_lKVAHVSLrx2yZlvx9ehKUA_usHr5h3t',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}});
+import { supabase as sb } from './src/lib/supabase';
 let user=null, mode='signup'; const el=id=>document.getElementById(id);
 window.BUILDTRACE_GET_LISTING_DETAIL=async listingId=>{
   const {data:listing,error}=await sb.from('listings').select('*').eq('id',listingId).eq('status','published').maybeSingle();
@@ -2583,6 +2582,16 @@ window.BUILDTRACE_GET_LISTING_DETAIL=async listingId=>{
 };
 function status(msg,kind=''){const n=el('authStatus');if(n){n.textContent=msg;n.className='inline-status '+kind;}}
 window.setMode=m=>{mode=m==='l'?'login':'signup';const row=el('authFullName').closest('.fg');row.style.display=mode==='signup'?'':'none';el('authFullName').required=mode==='signup';el('asub').textContent=mode==='signup'?'Créer mon compte':'Se connecter';el('abox').classList.toggle('mode-r',mode==='signup');el('tl').classList.toggle('on',mode==='login');el('tr').classList.toggle('on',mode==='signup');el('afoot').innerHTML=mode==='signup'?'Vous avez déjà un compte ? <a href="#" onclick="setMode(\'l\');return false">Se connecter</a>':'Pas encore de compte ? <a href="#" onclick="setMode(\'r\');return false">Créer un compte</a>';status('');};
+async function ensureOwnProfile(authUser, fallbackName=''){
+  if(!authUser?.id) throw Error('Session utilisateur invalide.');
+  const {data,error}=await sb.from('profiles').select('id').eq('id',authUser.id).maybeSingle();
+  if(error) throw error;
+  if(data) return;
+  const metadata=authUser.user_metadata||{};
+  const full_name=String(fallbackName||metadata.full_name||metadata.name||'').trim();
+  const {error:insertError}=await sb.from('profiles').insert({id:authUser.id,full_name});
+  if(insertError && insertError.code!=='23505') throw insertError;
+}
 window.doAuth=async e=>{
   e.preventDefault();
   const btn=el('asub');
@@ -2592,8 +2601,7 @@ window.doAuth=async e=>{
     const email=el('authEmail').value.trim().toLowerCase();
     const password=el('pwd').value;
     if(!email) throw Error('Saisissez votre e-mail.');
-    if(!password || password.length<6) throw Error('Le mot de passe doit contenir au moins 6 caractères.');
-
+    if(!password || password.length<8) throw Error('Le mot de passe doit contenir au moins 8 caractères.');
     if(mode==='signup'){
       const full_name=el('authFullName').value.trim();
       if(!full_name) throw Error('Saisissez votre nom et prénom.');
@@ -2602,14 +2610,9 @@ window.doAuth=async e=>{
         options:{data:{full_name},emailRedirectTo:location.origin+location.pathname}
       });
       if(error) throw error;
-      if(data.user){
-        await sb.from('profiles').upsert({
-          id:data.user.id,
-          full_name,
-        },{onConflict:'id'});
-      }
-      if(data.session){
+      if(data.session && data.user){
         user=data.user;
+        await ensureOwnProfile(data.user,full_name);
         await loadProfile();
         await loadListings();
         markWelcomeSeen();
@@ -2623,10 +2626,12 @@ window.doAuth=async e=>{
       const {data,error}=await sb.auth.signInWithPassword({email,password});
       if(error){
         const m=(error.message||'').toLowerCase();
-        if(m.includes('invalid login')) throw Error('E-mail ou mot de passe incorrect.');
+        if(m.includes('invalid login') || m.includes('invalid_credentials')) throw Error('E-mail ou mot de passe incorrect.');
         throw error;
       }
+      if(!data.user) throw Error('Connexion impossible. Réessayez.');
       user=data.user;
+      await ensureOwnProfile(data.user);
       await loadProfile();
       await loadListings();
       markWelcomeSeen();
@@ -2634,7 +2639,7 @@ window.doAuth=async e=>{
       window.go('home');
     }
   }catch(err){
-    status(err.message||'Erreur de connexion.','error');
+    status(err?.message||'Erreur de connexion.','error');
   }finally{
     btn.disabled=false;
   }
@@ -2657,7 +2662,31 @@ async function startOAuth(provider,label){const button=[...document.querySelecto
 window.signInWithGoogle=()=>startOAuth('google','google');
 
 let currentProfileData=null;
-async function loadProfile(){if(!user)return;const {data,error}=await sb.from('profiles').select('full_name,email,phone,account_type,company_name,city,neighborhood,avatar_url').eq('id',user.id).maybeSingle();if(error)console.error(error);currentProfileData=data||{};const name=data?.full_name||user.user_metadata?.full_name||'Utilisateur BUILDTRACE';el('profileName').textContent=name;el('profileEmail').textContent=user.email||data?.email||'';el('profileInitials').textContent=name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();el('profileRole').textContent=data?.account_type==='company'?'Entreprise':'Utilisateur';const {count:listCount}=await sb.from('listings').select('id',{count:'exact',head:true}).eq('owner_id',user.id);if(el('profileListingsCount'))el('profileListingsCount').textContent=String(listCount||0);if(el('profileFavoritesCount'))el('profileFavoritesCount').textContent=String(getFavoriteNames().length);const {count:chatCount}=await sb.from('conversations').select('id',{count:'exact',head:true}).or('buyer_id.eq.'+user.id+',seller_id.eq.'+user.id);if(el('profileConversationsCount'))el('profileConversationsCount').textContent=String(chatCount||0);if(el('editFullName'))el('editFullName').value=data?.full_name||name;if(el('editEmail'))el('editEmail').value=user.email||'';if(el('editPhone'))el('editPhone').value=data?.phone||'';if(el('editAccountType'))el('editAccountType').value=data?.account_type||'individual';if(el('editCompany'))el('editCompany').value=data?.company_name||'';if(el('editCity'))el('editCity').value=data?.city||'';if(el('editNeighborhood'))el('editNeighborhood').value=data?.neighborhood||'';}
+async function loadProfile(){
+  if(!user)return;
+  const {data,error}=await sb.from('profiles')
+    .select('full_name,phone,account_type,city,avatar_url')
+    .eq('id',user.id).maybeSingle();
+  if(error)console.error('Profil BUILDTRACE:',error.message);
+  currentProfileData=data||{};
+  const name=data?.full_name||user.user_metadata?.full_name||user.user_metadata?.name||'Utilisateur BUILDTRACE';
+  el('profileName').textContent=name;
+  el('profileEmail').textContent=user.email||'';
+  el('profileInitials').textContent=name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  el('profileRole').textContent=data?.account_type==='entreprise'?'Entreprise':'Utilisateur';
+  const {count:listCount}=await sb.from('listings').select('id',{count:'exact',head:true}).eq('owner_id',user.id);
+  if(el('profileListingsCount'))el('profileListingsCount').textContent=String(listCount||0);
+  if(el('profileFavoritesCount'))el('profileFavoritesCount').textContent=String(getFavoriteNames().length);
+  const {count:chatCount}=await sb.from('conversations').select('id',{count:'exact',head:true}).or('buyer_id.eq.'+user.id+',seller_id.eq.'+user.id);
+  if(el('profileConversationsCount'))el('profileConversationsCount').textContent=String(chatCount||0);
+  if(el('editFullName'))el('editFullName').value=data?.full_name||name;
+  if(el('editEmail'))el('editEmail').value=user.email||'';
+  if(el('editPhone'))el('editPhone').value=data?.phone||'';
+  if(el('editAccountType'))el('editAccountType').value=data?.account_type||'particulier';
+  if(el('editCompany'))el('editCompany').value='';
+  if(el('editCity'))el('editCity').value=data?.city||'';
+  if(el('editNeighborhood'))el('editNeighborhood').value='';
+}
 
 function showSettingsStatus(id,message,kind=''){const node=el(id);if(node){node.textContent=message;node.className='settings-status '+kind;}}
 window.toggleBuildtraceTheme=enabled=>{document.body.classList.toggle('dark-mode',!!enabled);try{localStorage.setItem('buildtrace_theme',enabled?'dark':'light');}catch(_){}const toggle=el('darkThemeToggle');if(toggle)toggle.checked=!!enabled;};
@@ -2773,8 +2802,8 @@ window.sendChatMessage=async event=>{
 window.filterConversations=filterConversations;
 window.BUILDTRACE_LOAD_CONVERSATIONS=loadConversationList;
 
-async function restore(){try{const {data:{session},error}=await sb.auth.getSession();if(error)throw error;if(session?.user){user=session.user;markWelcomeSeen();await loadProfile();await loadListings();let last='home';try{last=localStorage.getItem('buildtrace_last_screen')||'home';}catch(_){}const safe=['home','search','market','detail','favorites','messages','profile','my-listings','subscriptions','settings','feedback','add'];if(!safe.includes(last))last='home';window.go(last);return;}user=null;try{localStorage.removeItem('buildtrace_last_screen');}catch(_){}await loadListings();window.go(hasSeenWelcome()?'auth':'welcome');}catch(err){console.error('Restauration de session BUILDTRACE:',err);status(err.message||'La connexion n’a pas pu être restaurée. Reconnectez-vous.','error');await loadListings();window.go(hasSeenWelcome()?'auth':'welcome');}}
-sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session?.user){user=session.user;markWelcomeSeen();setTimeout(async()=>{await loadProfile();await loadListings();window.go('home');status('Connexion réussie. Bienvenue sur BUILDTRACE.','success');},0);}if(event==='SIGNED_OUT'){user=null;try{localStorage.removeItem('buildtrace_last_screen');}catch(_){}window.go('auth');}});
+async function restore(){try{const {data:{session},error}=await sb.auth.getSession();if(error)throw error;if(session?.user){user=session.user;markWelcomeSeen();await ensureOwnProfile(session.user);await loadProfile();await loadListings();let last='home';try{last=localStorage.getItem('buildtrace_last_screen')||'home';}catch(_){}const safe=['home','search','market','detail','favorites','messages','profile','my-listings','subscriptions','settings','feedback','add'];if(!safe.includes(last))last='home';window.go(last);return;}user=null;try{localStorage.removeItem('buildtrace_last_screen');}catch(_){}await loadListings();window.go(hasSeenWelcome()?'auth':'welcome');}catch(err){console.error('Restauration de session BUILDTRACE:',err);status(err.message||'La connexion n’a pas pu être restaurée. Reconnectez-vous.','error');await loadListings();window.go(hasSeenWelcome()?'auth':'welcome');}}
+sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session?.user){user=session.user;markWelcomeSeen();setTimeout(async()=>{try{await ensureOwnProfile(session.user);await loadProfile();await loadListings();window.go('home');status('Connexion réussie. Bienvenue sur BUILDTRACE.','success');}catch(err){console.error('Initialisation du compte BUILDTRACE:',err);status(err?.message||'Connexion réussie, mais le profil n’a pas pu être initialisé.','error');window.go('home');}},0);}if(event==='SIGNED_OUT'){user=null;try{localStorage.removeItem('buildtrace_last_screen');}catch(_){}window.go('auth');}});
 restore();
 </script>
 </body>
