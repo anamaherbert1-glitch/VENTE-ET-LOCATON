@@ -1420,6 +1420,129 @@ body:not(.dark-mode) .search-bottom .ni.on{
   .bn .ni,.market-bottom-nav .ni,.search-bottom .ni{min-width:48px;font-size:9px!important}
 }
 
+
+
+/* ===== BUILDTRACE refinement v2: fixed nav icon, flat cards, balanced media ===== */
+.bn .ni,.market-bottom-nav .ni{
+  transform:none!important;
+  transition:color .18s ease,background-color .18s ease,border-color .18s ease!important;
+  -webkit-tap-highlight-color:transparent;
+}
+.bn .ni:active,.bn .ni:focus,.bn .ni:focus-visible,
+.market-bottom-nav .ni:active,.market-bottom-nav .ni:focus,.market-bottom-nav .ni:focus-visible{
+  transform:none!important;
+  filter:none!important;
+  outline:none;
+}
+.bn .ni svg,.market-bottom-nav .ni svg{
+  transform:none!important;
+  transition:none!important;
+  width:24px;height:24px;
+  stroke:currentColor!important;
+  stroke-width:2.1!important;
+  fill:none!important;
+}
+.bn .ni.on svg,.market-bottom-nav .ni.on svg{
+  transform:none!important;
+  stroke:currentColor!important;
+}
+/* Identical shop icon on every screen; selection changes color, never shape */
+.bn .ni[onclick*="go('market')"],
+.market-bottom-nav .ni[onclick*="go('market')"]{color:inherit}
+.bn .ni[onclick*="go('market')"] svg,
+.market-bottom-nav .ni[onclick*="go('market')"] svg{stroke:currentColor!important}
+/* Product cards become clean, flat listings instead of dark blocks */
+.feed-grid .prod-card,.market-card{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  overflow:visible!important;
+}
+.feed-grid .prod-card .img,.market-card-photo{
+  width:100%;
+  aspect-ratio:4/3;
+  height:auto!important;
+  min-height:0;
+  border-radius:12px;
+  overflow:hidden;
+  background-size:cover;
+  background-position:center;
+  background-color:#dce8e0;
+}
+.feed-grid .prod-card .body,.market-card-body{
+  background:transparent!important;
+  border:0!important;
+  padding:8px 2px 5px!important;
+}
+.feed-grid .prod-card h3,.market-card h3{
+  font-size:13px!important;
+  line-height:1.28!important;
+  min-height:0!important;
+  margin:0 0 4px!important;
+  font-weight:750;
+}
+.feed-grid .prod-card .meta,.market-meta{
+  font-size:11px!important;
+  line-height:1.35!important;
+  margin-top:4px!important;
+}
+.feed-grid .prod-card .price,.market-price{
+  font-size:13px!important;
+  line-height:1.3!important;
+  margin-top:4px!important;
+  font-weight:850;
+}
+.market-card-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;margin-top:7px!important;padding-top:5px!important;
+  border-top:1px solid var(--bt-ui-border)!important;
+  font-size:10px!important;
+}
+.market-heart{
+  width:34px;height:32px;min-width:34px;
+  display:grid;place-items:center;
+  border:1px solid var(--bt-ui-border)!important;
+  border-radius:10px!important;
+  background:transparent!important;
+  color:var(--bt-ui-muted)!important;
+}
+.market-heart svg{width:19px;height:19px;stroke:currentColor;fill:none}
+.market-heart.liked{color:#e34b69!important;border-color:#e34b69!important}
+.market-kind,.market-premium{font-size:10px!important;padding:5px 9px!important}
+body.dark-mode .feed-grid .prod-card,
+body.dark-mode .market-card,
+body.dark-mode .feed-grid .prod-card .body,
+body.dark-mode .market-card-body{
+  background:transparent!important;
+  box-shadow:none!important;
+  border:0!important;
+}
+body.dark-mode .feed-grid .prod-card h3,
+body.dark-mode .market-card h3{color:#f1faf4!important}
+body.dark-mode .feed-grid .prod-card .meta,
+body.dark-mode .market-meta,
+body.dark-mode .market-card-foot{color:#c0d2c7!important}
+body.dark-mode .feed-grid .prod-card .price,
+body.dark-mode .market-price{color:#62e5a0!important}
+body.dark-mode .market-card-foot{border-color:#365b49!important}
+body.dark-mode .market-heart{color:#d5e9dc!important;border-color:#527765!important}
+body:not(.dark-mode) .feed-grid .prod-card h3,
+body:not(.dark-mode) .market-card h3{color:#17251f!important}
+body:not(.dark-mode) .feed-grid .prod-card .meta,
+body:not(.dark-mode) .market-meta,
+body:not(.dark-mode) .market-card-foot{color:#53665d!important}
+body:not(.dark-mode) .feed-grid .prod-card .price,
+body:not(.dark-mode) .market-price{color:#078747!important}
+@media(max-width:520px){
+  .feed-grid,.market-grid{column-gap:12px!important;row-gap:18px!important}
+  .feed-grid .prod-card .img,.market-card-photo{aspect-ratio:4/3}
+  .market-card-body{padding:7px 1px 4px!important}
+}
+@media(min-width:768px){
+  .feed-grid .prod-card .img,.market-card-photo{aspect-ratio:4/3;height:auto!important}
+}
+
 </style>
 </head>
 <body>
@@ -1609,7 +1732,7 @@ body:not(.dark-mode) .search-bottom .ni.on{
       Recherche
     </button>
     <button class="ni" onclick="go('market')">
-      <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M9 21V9"/></svg>
       Marketplace
     </button>
     <button class="ni" onclick="go('messages')">
