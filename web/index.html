@@ -1543,6 +1543,136 @@ body:not(.dark-mode) .market-price{color:#078747!important}
   .feed-grid .prod-card .img,.market-card-photo{aspect-ratio:4/3;height:auto!important}
 }
 
+
+
+/* ===== BUILDTRACE global theme system: white/green + black/white/green ===== */
+:root{
+  color-scheme:light;
+  --bt-page:#ffffff;
+  --bt-surface:#ffffff;
+  --bt-surface-soft:#f5faf7;
+  --bt-text:#111713;
+  --bt-muted:#536159;
+  --bt-border:#dce7e0;
+  --bt-green:#078747;
+  --bt-green-strong:#00a94f;
+  --bt-control:#f0f7f2;
+  --bg:var(--bt-page);
+  --ink:var(--bt-text);
+  --muted:var(--bt-muted);
+  --line:var(--bt-border);
+}
+body.dark-mode{
+  color-scheme:dark;
+  --bt-page:#050706;
+  --bt-surface:#0b100d;
+  --bt-surface-soft:#111a14;
+  --bt-text:#f5faf6;
+  --bt-muted:#c0cdc4;
+  --bt-border:#2a3b30;
+  --bt-green:#42df88;
+  --bt-green-strong:#55e995;
+  --bt-control:#111a14;
+  --bg:var(--bt-page);
+  --ink:var(--bt-text);
+  --muted:var(--bt-muted);
+  --line:var(--bt-border);
+}
+html,body{background:var(--bt-page)!important;color:var(--bt-text)!important}
+.screen:not(#s-welcome){background:var(--bt-page)!important;color:var(--bt-text)!important}
+body.dark-mode .screen:not(#s-welcome){background:#050706!important;color:#f5faf6!important}
+/* All ordinary headings and copy inherit the active theme */
+h1,h2,h3,h4,h5,h6,p,small,label,li,dt,dd,
+.account-note,.section-head h2,.account-section-label,
+.settings-card-head h2,.theme-setting strong,
+.profile-name,.conversation-main strong{
+  color:var(--bt-text);
+}
+a,.section-head a,.settings-link-btn{color:var(--bt-green)!important}
+.muted,.meta,.market-meta,.account-muted,.settings-description,
+.prod-card .meta,.rec-item .meta{color:var(--bt-muted)!important}
+/* Consistent light-mode white surfaces and dark-mode black surfaces */
+.card,.panel,.settings-card,.account-screen,.account-stats,
+.account-menu,.feedback-box,.plan-card,.listing-manage-card,
+.favorites-toolbar,.favorites-empty,.conversation,.chat-panel,
+.form-panel,.modal-content{
+  background:var(--bt-surface)!important;
+  color:var(--bt-text)!important;
+  border-color:var(--bt-border)!important;
+}
+body.dark-mode .card,body.dark-mode .panel,
+body.dark-mode .settings-card,body.dark-mode .account-screen,
+body.dark-mode .account-stats,body.dark-mode .account-menu,
+body.dark-mode .feedback-box,body.dark-mode .plan-card,
+body.dark-mode .listing-manage-card,body.dark-mode .favorites-toolbar,
+body.dark-mode .favorites-empty,body.dark-mode .conversation,
+body.dark-mode .chat-panel,body.dark-mode .form-panel,
+body.dark-mode .modal-content{
+  background:#0b100d!important;color:#f5faf6!important;
+  border-color:#2a3b30!important;box-shadow:none!important;
+}
+/* Listing and feed items stay flat: image first, no heavy colored card block */
+.market-card,.feed-grid .prod-card{
+  background:transparent!important;border:0!important;
+  box-shadow:none!important;border-radius:0!important;
+}
+.market-card-body,.feed-grid .prod-card .body{
+  background:transparent!important;border:0!important;box-shadow:none!important;
+}
+.market-card h3,.feed-grid .prod-card h3{color:var(--bt-text)!important}
+.market-price,.feed-grid .prod-card .price{color:var(--bt-green)!important}
+.market-meta,.market-card-foot,.feed-grid .prod-card .meta{color:var(--bt-muted)!important}
+.market-card-foot{border-color:var(--bt-border)!important}
+.market-heart{background:transparent!important;color:var(--bt-muted)!important;border-color:var(--bt-border)!important}
+/* Inputs remain readable on both themes */
+input,select,textarea{
+  color:var(--bt-text)!important;
+  background:var(--bt-surface-soft)!important;
+  border-color:var(--bt-border)!important;
+}
+input::placeholder,textarea::placeholder{color:var(--bt-muted)!important;opacity:1}
+body.dark-mode input,body.dark-mode select,body.dark-mode textarea{
+  background:#101712!important;color:#f5faf6!important;border-color:#34483a!important;
+}
+button{color:inherit}
+.btn-primary,.account-primary,.settings-save,.chat-compose button{
+  background:var(--bt-green-strong)!important;color:#052414!important;
+  border-color:var(--bt-green-strong)!important;
+}
+/* Authentication uses the same clean theme instead of a separate navy palette */
+#s-auth{background:var(--bt-page)!important;color:var(--bt-text)!important}
+#s-auth::after{display:none!important}
+.auth-title{color:var(--bt-text)!important}
+body.dark-mode #s-auth{background:#050706!important;color:#f5faf6!important}
+body.dark-mode .auth-title{color:#f5faf6!important}
+/* Keep the welcome hero photographic, but preserve clear white copy */
+#s-welcome{color:#fff!important}
+/* Bottom navigation follows the same global white/green and black/green palette */
+.bn,.market-bottom-nav,.search-bottom{
+  background:var(--bt-surface)!important;
+  border-top:1px solid var(--bt-border)!important;
+}
+.bn .ni,.market-bottom-nav .ni,.search-bottom .ni{
+  color:var(--bt-muted)!important;
+}
+.bn .ni.on,.market-bottom-nav .ni.on,.search-bottom .ni.on{
+  color:var(--bt-green)!important;
+  background:var(--bt-control)!important;
+  border-color:var(--bt-border)!important;
+}
+body.dark-mode .bn,body.dark-mode .market-bottom-nav,body.dark-mode .search-bottom{
+  background:#050706!important;border-top-color:#2a3b30!important;
+}
+body.dark-mode .bn .ni,body.dark-mode .market-bottom-nav .ni,
+body.dark-mode .search-bottom .ni{color:#c0cdc4!important}
+body.dark-mode .bn .ni.on,body.dark-mode .market-bottom-nav .ni.on,
+body.dark-mode .search-bottom .ni.on{
+  color:#42df88!important;background:#101a13!important;border-color:#315640!important;
+}
+@media(prefers-color-scheme:dark){
+  body:not(.dark-mode){color-scheme:light}
+}
+
 </style>
 </head>
 <body>
