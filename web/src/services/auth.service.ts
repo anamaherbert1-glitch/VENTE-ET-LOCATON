@@ -73,8 +73,10 @@ export async function signUp(
   });
   if (error) throw mapAuthError(error);
 
-  if (data.user) {
-    await ensureProfile(data.user.id, cleanName, cleanEmail);
+  // When email confirmation is enabled there is no authenticated session yet.
+  // The profile is created after the first verified sign-in instead.
+  if (data.user && data.session) {
+    await ensureProfile(data.user.id, cleanName);
   }
 
   return {
@@ -101,6 +103,11 @@ export async function signIn(
   if (!data.user || !data.session) {
     throw new AuthError('Connexion impossible.');
   }
+  const metadata = data.user.user_metadata ?? {};
+  await ensureProfile(
+    data.user.id,
+    String(metadata.full_name ?? metadata.name ?? '').trim(),
+  );
   return { user: data.user, session: data.session };
 }
 
@@ -155,19 +162,20 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
 export async function ensureProfile(
   userId: string,
   fullName: string,
-  email?: string,
 ): Promise<void> {
-  const { error } = await supabase.from('profiles').upsert(
-    {
-      id: userId,
-      full_name: fullName,
-      ...(email ? { email } : {}),
-    },
-    { onConflict: 'id' },
-  );
-  // Ne pas bloquer l'auth si la colonne email n'existe pas encore
-  if (error && !String(error.message).toLowerCase().includes('email')) {
-    console.warn('[BUILDTRACE] ensureProfile:', error.message);
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw mapAuthError(error);
+  if (data) return;
+
+  const { error: insertError } = await supabase
+    .from('profiles')
+    .insert({ id: userId, full_name: fullName });
+  if (insertError && insertError.code !== '23505') {
+    throw mapAuthError(insertError);
   }
 }
 
