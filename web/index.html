@@ -2603,7 +2603,8 @@ window.BUILDTRACE_CAPTURE_LISTING_LOCATION=()=>{
     status.textContent='Coordonnées ajoutées à cette annonce. Vérifiez la ville et le quartier avant publication.';
   },()=>{status.textContent='Position non obtenue. La ville et le quartier saisis manuellement seront conservés.';},{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 };
-\nfunction normalizeBuildtraceProduct(row){
+
+function normalizeBuildtraceProduct(row){
   if(!row)return null;
   const listingType=row.offer_type==='rental'?'rent':row.offer_type;
   return {
@@ -2862,6 +2863,9 @@ window.submitProduct=async event=>{
       dimensions:el('productDimensions').value.trim()||null,
       condition:el('productCondition').value,
       city:el('productLocation').value.trim(),
+      neighborhood:el('productNeighborhood').value.trim()||null,
+      latitude:el('productLatitude').value?Number(el('productLatitude').value):null,
+      longitude:el('productLongitude').value?Number(el('productLongitude').value):null,
       photo_paths:urls,
       status:'published'
     };
