@@ -1667,7 +1667,37 @@ body.dark-mode :is(.btn-primary,.account-primary,.settings-save,.chat-compose bu
  :is(.sheet,.sheet-opt,.conversation,.market-card,.feed-grid .prod-card,.settings-card){transition:background-color .18s ease,color .18s ease,border-color .18s ease}
 }
 
+
+/* ===== Carte géographique BUILDTRACE ===== */
+.map-screen{background:var(--bt-page);min-height:100dvh}
+.map-page-head{display:flex;align-items:center;gap:12px;padding:16px 18px;background:var(--navy);color:#fff}
+.map-page-head h1{font-size:19px;font-weight:850}.map-page-head p{font-size:12px;color:#d7e4dc;margin-top:3px}
+.map-back{width:40px;height:40px;border:1px solid rgba(255,255,255,.28);border-radius:13px;background:rgba(255,255,255,.1);color:#fff;font-size:25px}
+.map-tools{padding:14px;display:grid;gap:10px}
+.map-searchline{display:grid;grid-template-columns:1fr auto;gap:8px}
+.map-searchline input,.map-filterline select{min-width:0;width:100%;height:46px;border:1px solid var(--bt-border);border-radius:13px;background:var(--bt-surface);color:var(--bt-text);padding:0 13px;font:inherit}
+.map-action{border:0;border-radius:13px;padding:0 14px;background:var(--bt-green-strong);color:white;font-weight:750}
+.map-filterline{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.map-info{font-size:12px;color:var(--bt-muted);padding:0 2px}
+#buildtraceMap{height:min(62vh,620px);min-height:360px;margin:0 14px;border:1px solid var(--bt-border);border-radius:18px;overflow:hidden;z-index:1;background:#e8eee9}
+.map-legend{display:flex;gap:14px;flex-wrap:wrap;padding:12px 16px;color:var(--bt-muted);font-size:12px}
+.map-listings{padding:0 14px 28px;display:grid;gap:9px}
+.map-listing-row{display:flex;align-items:center;gap:12px;text-align:left;padding:12px;border:1px solid var(--bt-border);border-radius:15px;background:var(--bt-surface);color:var(--bt-text)}
+.map-listing-row img{width:58px;height:58px;border-radius:11px;object-fit:cover;background:var(--bt-surface-soft)}
+.map-listing-row span{min-width:0;display:grid;gap:4px}.map-listing-row strong{font-size:13px}.map-listing-row small{font-size:11px;color:var(--bt-muted)}
+.map-empty{padding:18px;text-align:center;color:var(--bt-muted);font-size:13px}
+.location-entry{display:grid;gap:9px;padding:12px;border:1px solid var(--bt-border);border-radius:14px;background:var(--bt-surface-soft)}
+.location-entry .location-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.location-entry input{min-width:0;width:100%;height:44px;border:1px solid var(--bt-border);border-radius:10px;background:var(--bt-surface);color:var(--bt-text);padding:0 11px;font:inherit}
+.location-entry button{height:42px;border:0;border-radius:11px;background:var(--bt-green-strong);color:white;font-weight:750}
+.location-entry small{font-size:11px;color:var(--bt-muted)}
+body.dark-mode .map-page-head{background:#080808}
+body.dark-mode #buildtraceMap{border-color:#343a36}
+body.dark-mode .map-listing-row,body.dark-mode .location-entry{background:#090909;border-color:#343a36}
+@media(max-width:420px){#buildtraceMap{height:56vh;min-height:330px}.map-filterline{grid-template-columns:1fr}.map-searchline{grid-template-columns:1fr auto}}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 </head>
 <body>
 
@@ -2039,7 +2069,13 @@ body.dark-mode :is(.btn-primary,.account-primary,.settings-save,.chat-compose bu
         </label>
       </div>
       <label>Dimensions / mesures<input placeholder="Ex. : 20 × 10 × 6 cm ou longueur 3 m"></label>
-      <label>Localisation<input id="productLocation" required placeholder="Ville, quartier"></label>
+      <div class="location-entry">
+        <strong>Localisation de l’annonce</strong>
+        <div class="location-grid"><label>Ville<input id="productLocation" required placeholder="Ex. : Lomé"></label><label>Quartier<input id="productNeighborhood" placeholder="Ex. : Tokoin"></label></div>
+        <button type="button" onclick="window.BUILDTRACE_CAPTURE_LISTING_LOCATION()">Utiliser ma position GPS (facultatif)</button>
+        <small id="listingLocationStatus">Vous pouvez saisir la ville et le quartier sans autoriser la géolocalisation.</small>
+        <input id="productLatitude" type="hidden"><input id="productLongitude" type="hidden">
+      </div>
       <div class="ai-hint"><svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 00-4 12.7V19h8v-3.3A7 7 0 0012 3Z"/><path d="M9 22h6M9 16h6M19 4l1-2M5 4 4 2M21 11h2"/></svg><span><strong>Analyse IA du matériau</strong><small>Après l'ajout des photos, l'IA pourra aider à évaluer son état et repérer d'éventuels défauts.</small></span></div>
       <button class="analyze-btn" type="button" onclick="previewAiAnalysis()">Analyser les photos avec l'IA ✨</button>
       <p id="aiStatus" class="inline-status" aria-live="polite">L'analyse IA réelle sera connectée lors de l'intégration du service.</p>
@@ -2074,6 +2110,7 @@ body.dark-mode :is(.btn-primary,.account-primary,.settings-save,.chat-compose bu
         <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10m-7 6h4"/><circle cx="18" cy="6" r="2"/><circle cx="7" cy="12" r="2"/></svg>
       </button>
     </div>
+    <div class="map-shortcut"><button class="map-action" type="button" onclick="go('map')">⌖ Explorer les annonces sur la carte</button></div>
     <div class="market-summary"><strong>Matériaux disponibles</strong><span id="marketCount">6 annonces</span></div>
     <div class="market-grid" id="marketGrid">
       <article class="market-card" data-kind="sale" data-premium="true" data-name="Briques rouges" onclick="openMarketProduct('Briques rouges','45 000 FCFA','À vendre · Lomé')">
@@ -2109,6 +2146,35 @@ body.dark-mode :is(.btn-primary,.account-primary,.settings-save,.chat-compose bu
     <button class="ni on" onclick="go('market')"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M9 21V9"/></svg>Marketplace</button>
     <button class="ni" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Messages</button>
     <button class="ni" onclick="alert('Profil : écran à construire')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil</button>
+  </nav>
+</div>
+
+<!-- Écran Carte : annonces géolocalisées -->
+<div class="screen map-screen" id="s-map">
+  <header class="map-page-head">
+    <button class="map-back" type="button" onclick="go('market')" aria-label="Retour">‹</button>
+    <div><h1>Carte BUILDTRACE</h1><p>Explorez les matériaux et équipements autour de vous</p></div>
+  </header>
+  <div class="map-tools">
+    <div class="map-searchline">
+      <input id="mapAreaSearch" type="search" placeholder="Ville ou quartier…" aria-label="Rechercher une zone">
+      <button class="map-action" type="button" onclick="window.BUILDTRACE_FILTER_MAP()">Rechercher</button>
+    </div>
+    <div class="map-filterline">
+      <select id="mapOfferFilter" aria-label="Type d'annonce"><option value="all">Toutes les annonces</option><option value="sale">À vendre</option><option value="rent">À louer</option></select>
+      <button class="map-action" type="button" onclick="window.BUILDTRACE_LOCATE_ME()">Ma position</button>
+    </div>
+    <p class="map-info" id="mapStatus" role="status">La carte affiche les annonces disposant de coordonnées GPS. La ville et le quartier restent consultables sans GPS.</p>
+  </div>
+  <div id="buildtraceMap" role="application" aria-label="Carte des annonces BUILDTRACE"></div>
+  <div class="map-legend"><span>● Annonces géolocalisées</span><span>La position n’est partagée qu’à votre demande.</span></div>
+  <div class="map-listings" id="mapListingResults"><p class="map-empty">Chargement des annonces…</p></div>
+  <nav class="bn market-bottom-nav">
+    <button class="ni" onclick="go('home')">⌂<span>Accueil</span></button>
+    <button class="ni" onclick="go('search')">⌕<span>Recherche</span></button>
+    <button class="ni on" onclick="go('map')">⌖<span>Carte</span></button>
+    <button class="ni" onclick="go('messages')">▤<span>Messages</span></button>
+    <button class="ni" onclick="go('profile')">♙<span>Profil</span></button>
   </nav>
 </div>
 
@@ -2324,7 +2390,7 @@ function submitFeedback(event){event.preventDefault();if(window.submitBuildtrace
 function hasSeenWelcome(){try{return localStorage.getItem('buildtrace_welcome_seen')==='1';}catch(_){return false;}}
 function markWelcomeSeen(){try{localStorage.setItem('buildtrace_welcome_seen','1');}catch(_){}}
 function go(id){
-  const allowed=['welcome','auth','home','search','market','detail','favorites','messages','chat','profile','my-listings','subscriptions','settings','feedback','add'];
+  const allowed=['welcome','auth','home','search','market','map','detail','favorites','messages','chat','profile','my-listings','subscriptions','settings','feedback','add'];
   if(!allowed.includes(id)||!document.getElementById('s-'+id))return;
   // La vitrine est une introduction unique : dès sa première apparition, elle ne revient plus.
   if(id==='welcome')markWelcomeSeen();
@@ -2332,7 +2398,7 @@ function go(id){
   document.getElementById('s-'+id).classList.add('active');
   try{if(id==='welcome'||id==='auth')localStorage.removeItem('buildtrace_last_screen');else localStorage.setItem('buildtrace_last_screen',id);}catch(_){}
   if(id==='favorites')renderFavorites();if(id==='my-listings'&&window.loadMyListings)window.loadMyListings();
-  if(id==='market'||id==='search')syncFavoriteButtons();
+  if(id==='market'||id==='search')syncFavoriteButtons();\n  if(id==='map'&&window.BUILDTRACE_INIT_MAP)window.BUILDTRACE_INIT_MAP();
   if(id==='messages'&&window.BUILDTRACE_LOAD_CONVERSATIONS)window.BUILDTRACE_LOAD_CONVERSATIONS();
   window.scrollTo(0,0);
 }
@@ -2470,13 +2536,80 @@ async function openConversation(id){
 <script type="module">
 import { supabase as sb } from './src/lib/supabase';
 let user=null, mode='signup'; const el=id=>document.getElementById(id);
-function normalizeBuildtraceProduct(row){
+
+let buildtraceMap=null,buildtraceMapMarkers=[],buildtraceMapRows=[];
+function mapStatus(message){const n=el('mapStatus');if(n)n.textContent=message;}
+function mapFilteredRows(){
+  const term=(el('mapAreaSearch')?.value||'').trim().toLocaleLowerCase('fr');
+  const kind=el('mapOfferFilter')?.value||'all';
+  return buildtraceMapRows.filter(row=>{
+    const area=[row.city,row.neighborhood].filter(Boolean).join(' ').toLocaleLowerCase('fr');
+    const type=row.offer_type==='rental'?'rent':row.offer_type;
+    return (!term||area.includes(term))&&(kind==='all'||type===kind||type==='both');
+  });
+}
+function renderBuildtraceMapRows(){
+  const rows=mapFilteredRows(),list=el('mapListingResults');if(!list)return;
+  list.innerHTML='';
+  if(!rows.length){list.innerHTML='<p class="map-empty">Aucune annonce ne correspond à cette zone.</p>';return;}
+  rows.forEach(row=>{
+    const item=document.createElement('button');item.type='button';item.className='map-listing-row';
+    const img=document.createElement('img');img.alt='';img.src=row.photo_paths?.[0]||'';
+    const body=document.createElement('span'),title=document.createElement('strong'),meta=document.createElement('small'),price=document.createElement('small');
+    title.textContent=row.title||'Annonce BUILDTRACE';
+    meta.textContent=[row.city,row.neighborhood].filter(Boolean).join(' · ')||'Localisation non précisée';
+    price.textContent=formatBuildtraceProductPrice(normalizeBuildtraceProduct(row));
+    body.append(title,meta,price);item.append(img,body);
+    item.addEventListener('click',()=>window.openMarketProduct(row.title,price.textContent,'Annonce BUILDTRACE',{...normalizeBuildtraceProduct(row)}));
+    list.append(item);
+  });
+  if(buildtraceMap){
+    buildtraceMapMarkers.forEach(marker=>marker.remove());buildtraceMapMarkers=[];
+    rows.filter(row=>Number.isFinite(Number(row.latitude))&&Number.isFinite(Number(row.longitude))&&row.latitude!==null&&row.longitude!==null).forEach(row=>{
+      const marker=window.L.marker([Number(row.latitude),Number(row.longitude)]).addTo(buildtraceMap);
+      const title=String(row.title||'Annonce').replace(/[&<>"']/g,'');
+      const area=[row.city,row.neighborhood].filter(Boolean).join(' · ').replace(/[&<>"']/g,'');
+      marker.bindPopup('<strong>'+title+'</strong><br>'+area);
+      marker.on('click',()=>{});
+      buildtraceMapMarkers.push(marker);
+    });
+    if(buildtraceMapMarkers.length){const group=window.L.featureGroup(buildtraceMapMarkers);buildtraceMap.fitBounds(group.getBounds().pad(.18),{maxZoom:14});}
+  }
+}
+window.BUILDTRACE_SET_MAP_LISTINGS=rows=>{buildtraceMapRows=Array.isArray(rows)?rows:[];renderBuildtraceMapRows();};
+window.BUILDTRACE_FILTER_MAP=()=>{renderBuildtraceMapRows();mapStatus('Résultats filtrés par ville ou quartier. Les annonces sans coordonnées restent dans la liste.');};
+window.BUILDTRACE_INIT_MAP=()=>{
+  if(!window.L){mapStatus('La bibliothèque cartographique n’a pas pu être chargée. Vérifiez votre connexion Internet.');return;}
+  if(!buildtraceMap){buildtraceMap=window.L.map('buildtraceMap',{scrollWheelZoom:false}).setView([6.1725,1.2314],12);
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(buildtraceMap);}
+  setTimeout(()=>buildtraceMap.invalidateSize(),120);renderBuildtraceMapRows();
+  if(!buildtraceMapRows.length)mapStatus('Aucune annonce chargée pour le moment. Les annonces avec coordonnées apparaîtront sur la carte.');
+};
+window.BUILDTRACE_LOCATE_ME=()=>{
+  if(!navigator.geolocation){mapStatus('La géolocalisation n’est pas prise en charge sur cet appareil.');return;}
+  mapStatus('Demande de position en cours…');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    if(!buildtraceMap)window.BUILDTRACE_INIT_MAP();
+    if(buildtraceMap){const point=[pos.coords.latitude,pos.coords.longitude];buildtraceMap.setView(point,14);window.L.circleMarker(point,{radius:8,color:'#087b45',fillColor:'#00c853',fillOpacity:.85}).addTo(buildtraceMap).bindPopup('Votre position (visible uniquement sur votre écran)').openPopup();}
+    mapStatus('Votre position est affichée sur votre écran. Elle n’a pas été envoyée à un vendeur.');
+  },()=>mapStatus('Position non disponible. Vous pouvez toujours rechercher par ville ou quartier.'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+};
+window.BUILDTRACE_CAPTURE_LISTING_LOCATION=()=>{
+  const status=el('listingLocationStatus');
+  if(!navigator.geolocation){status.textContent='La géolocalisation n’est pas disponible. Saisissez la ville et le quartier.';return;}
+  status.textContent='Demande d’autorisation GPS…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    el('productLatitude').value=String(pos.coords.latitude);el('productLongitude').value=String(pos.coords.longitude);
+    status.textContent='Coordonnées ajoutées à cette annonce. Vérifiez la ville et le quartier avant publication.';
+  },()=>{status.textContent='Position non obtenue. La ville et le quartier saisis manuellement seront conservés.';},{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+};
+\nfunction normalizeBuildtraceProduct(row){
   if(!row)return null;
   const listingType=row.offer_type==='rental'?'rent':row.offer_type;
   return {
     ...row,
     listing_type:listingType,
-    location:row.city||'',
+    location:[row.city,row.neighborhood].filter(Boolean).join(' · '),
     photo_urls:Array.isArray(row.photo_paths)?row.photo_paths:[],
     sale_price_xof:row.sale_price_xof??(listingType==='rent'?null:row.price_xof),
     rental_price_xof:row.rental_price_xof??(listingType==='sale'?null:row.price_xof),
@@ -2654,7 +2787,7 @@ async function loadListings(){
   if(error){console.error('Produits BUILDTRACE:',error);return;}
   const grid=el('marketGrid');
   grid.querySelectorAll('[data-live-listing="true"]').forEach(n=>n.remove());
-  const home=el('homeLiveListings');if(home)home.innerHTML='';
+  const home=el('homeLiveListings');if(home)home.innerHTML='';\n  if(window.BUILDTRACE_SET_MAP_LISTINGS)window.BUILDTRACE_SET_MAP_LISTINGS(data||[]);
   (data||[]).forEach(row=>{
     const item=normalizeBuildtraceProduct(row);
     const priceText=formatBuildtraceProductPrice(item);
@@ -2735,7 +2868,7 @@ window.submitProduct=async event=>{
     const {error}=await sb.from('products').insert(payload);
     if(error)throw error;
     say('Annonce publiée avec succès !','success');
-    el('productForm').reset();el('productPhotos').value='';el('photoPreview').innerHTML='';
+    el('productForm').reset();el('productPhotos').value='';el('productLatitude').value='';el('productLongitude').value='';if(el('listingLocationStatus'))el('listingLocationStatus').textContent='Vous pouvez saisir la ville et le quartier sans autoriser la géolocalisation.';el('photoPreview').innerHTML='';
     el('photoCount').textContent='Touchez pour sélectionner vos photos';
     await loadListings();
     setTimeout(()=>window.go('market'),900);
@@ -2862,7 +2995,7 @@ window.sendChatMessage=async event=>{
 window.filterConversations=filterConversations;
 window.BUILDTRACE_LOAD_CONVERSATIONS=loadConversationList;
 
-async function restore(){try{const {data:{session},error}=await sb.auth.getSession();if(error)throw error;if(session?.user){user=session.user;markWelcomeSeen();await ensureOwnProfile(session.user);await loadProfile();await loadListings();let last='home';try{last=localStorage.getItem('buildtrace_last_screen')||'home';}catch(_){}const safe=['home','search','market','detail','favorites','messages','profile','my-listings','subscriptions','settings','feedback','add'];if(!safe.includes(last))last='home';window.go(last);return;}user=null;try{localStorage.removeItem('buildtrace_last_screen');}catch(_){}await loadListings();window.go(hasSeenWelcome()?'auth':'welcome');}catch(err){console.error('Restauration de session BUILDTRACE:',err);status(err.message||'La connexion n’a pas pu être restaurée. Reconnectez-vous.','error');await loadListings();window.go(hasSeenWelcome()?'auth':'welcome');}}
+async function restore(){try{const {data:{session},error}=await sb.auth.getSession();if(error)throw error;if(session?.user){user=session.user;markWelcomeSeen();await ensureOwnProfile(session.user);await loadProfile();await loadListings();let last='home';try{last=localStorage.getItem('buildtrace_last_screen')||'home';}catch(_){}const safe=['home','search','market','map','detail','favorites','messages','profile','my-listings','subscriptions','settings','feedback','add'];if(!safe.includes(last))last='home';window.go(last);return;}user=null;try{localStorage.removeItem('buildtrace_last_screen');}catch(_){}await loadListings();window.go(hasSeenWelcome()?'auth':'welcome');}catch(err){console.error('Restauration de session BUILDTRACE:',err);status(err.message||'La connexion n’a pas pu être restaurée. Reconnectez-vous.','error');await loadListings();window.go(hasSeenWelcome()?'auth':'welcome');}}
 sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session?.user){user=session.user;markWelcomeSeen();setTimeout(async()=>{try{await ensureOwnProfile(session.user);await loadProfile();await loadListings();window.go('home');status('Connexion réussie. Bienvenue sur BUILDTRACE.','success');}catch(err){console.error('Initialisation du compte BUILDTRACE:',err);status(err?.message||'Connexion réussie, mais le profil n’a pas pu être initialisé.','error');window.go('home');}},0);}if(event==='SIGNED_OUT'){user=null;try{localStorage.removeItem('buildtrace_last_screen');}catch(_){}window.go('auth');}});
 restore();
 </script>
