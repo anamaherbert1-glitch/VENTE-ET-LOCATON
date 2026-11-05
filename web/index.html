@@ -1695,6 +1695,15 @@ body.dark-mode .map-page-head{background:#080808}
 body.dark-mode #buildtraceMap{border-color:#343a36}
 body.dark-mode .map-listing-row,body.dark-mode .location-entry{background:#090909;border-color:#343a36}
 @media(max-width:420px){#buildtraceMap{height:56vh;min-height:330px}.map-filterline{grid-template-columns:1fr}.map-searchline{grid-template-columns:1fr auto}}
+
+.detail-location-map{margin:0 0 16px;padding:12px;border:1px solid var(--line);border-radius:15px;background:#fff}
+.detail-location-map h3{font-size:14px;font-weight:850;margin-bottom:5px;color:#17251f}
+.detail-location-map p{font-size:12px;color:#647568;margin-bottom:9px}
+#detailMapCanvas{height:175px;width:100%;border-radius:11px;overflow:hidden;background:#edf2ee}
+.detail-map-open{display:inline-flex;align-items:center;gap:6px;margin-top:9px;color:#087a43;font-size:12px;font-weight:800;text-decoration:none}
+body.dark-mode .detail-location-map{background:#090909;border-color:#343a36}
+body.dark-mode .detail-location-map h3{color:#fff}
+body.dark-mode .detail-location-map p{color:#c0cbc3}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -2143,7 +2152,7 @@ body.dark-mode .map-listing-row,body.dark-mode .location-entry{background:#09090
   <nav class="bn market-bottom-nav">
     <button class="ni" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Accueil</button>
     <button class="ni" onclick="document.getElementById('marketSearchInput').focus()"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Recherche</button>
-    <button class="ni on" onclick="go('market')"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M9 21V9"/></svg>Marketplace</button>
+    <button class="ni on" onclick="go('market')"><svg viewBox="0 0 24 24"><path d="M3 10.5 5 4h14l2 6.5"/><path d="M4 10.5V20h16v-9.5"/><path d="M3 10.5a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0"/><path d="M9 20v-5h6v5"/></svg>Marketplace</button>
     <button class="ni" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Messages</button>
     <button class="ni" onclick="alert('Profil : écran à construire')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil</button>
   </nav>
@@ -2193,6 +2202,7 @@ body.dark-mode .map-listing-row,body.dark-mode .location-entry{background:#09090
     </div>
   </div>
   <div class="detail-body">
+    <section class="detail-location-map" id="detailLocationMap" hidden><h3>Emplacement de l’annonce</h3><p id="detailMapLabel">Localisation fournie par le vendeur</p><div id="detailMapCanvas"></div><a class="detail-map-open" id="detailMapExternal" href="#" target="_blank" rel="noopener">Ouvrir dans OpenStreetMap ↗</a></section>
     <div class="detail-type" id="detailKind">À vendre · Matériaux de construction</div>
     <div class="detail-title-row"><h1 id="detailName">Briques rouges</h1><span style="font-size:11px;color:#d99a16;font-weight:800">★ 4.8</span></div>
     <div class="detail-price" id="detailPrice">45 000 FCFA</div>
@@ -2299,11 +2309,9 @@ async function openMarketProduct(name,price,kind,listing=null){
   const activeScreen=document.querySelector('.screen.active')?.id||'s-market';
   selectedMarketProduct={name,price,kind,...(listing||{}),returnTo:activeScreen==='s-home'?'home':'market'};
   let sellerProfile=null;
-  if(listing?.id){
-    if(typeof window.BUILDTRACE_GET_LISTING_DETAIL!=='function')throw Error('Le service de détails est momentanément indisponible. Réessayez.');
-    const result=await window.BUILDTRACE_GET_LISTING_DETAIL(listing.id);
-    selectedMarketProduct={...selectedMarketProduct,...result.listing};
-    sellerProfile=result.profile||null;
+  if(listing?.id&&typeof window.BUILDTRACE_GET_LISTING_DETAIL==='function'){
+    try{const result=await window.BUILDTRACE_GET_LISTING_DETAIL(listing.id);selectedMarketProduct={...selectedMarketProduct,...result.listing};sellerProfile=result.profile||null;}
+    catch(error){console.warn('Détails complémentaires indisponibles ; affichage des données déjà chargées.',error);}
   }
   const p=selectedMarketProduct;
   const set=(id,value,fallback='Non renseigné')=>{const node=document.getElementById(id);if(node)node.textContent=value===0?'0':(value??'')!==''?String(value):fallback;};
@@ -2313,6 +2321,7 @@ async function openMarketProduct(name,price,kind,listing=null){
   set('detailName',p.name);set('detailPrice',displayPrice);set('detailKind',p.kind);
   set('detailDescription',p.description||p.details,'Aucune description détaillée fournie par le vendeur.');
   set('detailLocation',p.location,'Localisation non précisée');set('detailCondition',p.condition,'Non précisé');
+  renderDetailLocationMap(p);
   const quantity=[p.quantity,p.unit].filter(Boolean).join(' ');
   set('detailQuantity',quantity,'Non précisée');set('detailDimensions',p.dimensions,'Non précisées');
   detailPhotos=Array.isArray(p.photo_urls)?p.photo_urls.filter(url=>typeof url==='string'&&/^https:\/\//i.test(url)):[];
@@ -2333,6 +2342,19 @@ async function openMarketProduct(name,price,kind,listing=null){
   }
   set('chatProductName',p.name);set('chatProductPrice',displayPrice);
   go('detail');
+}
+let detailLeafletMap=null;
+function renderDetailLocationMap(product){
+  const section=document.getElementById('detailLocationMap'),canvas=document.getElementById('detailMapCanvas'),label=document.getElementById('detailMapLabel'),external=document.getElementById('detailMapExternal');
+  const lat=Number(product?.latitude),lng=Number(product?.longitude);
+  const hasCoords=product?.latitude!==null&&product?.latitude!==undefined&&product?.longitude!==null&&product?.longitude!==undefined&&Number.isFinite(lat)&&Number.isFinite(lng);
+  if(!section||!canvas)return;
+  section.hidden=!hasCoords;
+  if(!hasCoords){if(detailLeafletMap){detailLeafletMap.remove();detailLeafletMap=null;}return;}
+  if(label)label.textContent=[product.neighborhood,product.city].filter(Boolean).join(' · ')||'Coordonnées GPS de cette annonce';
+  if(external)external.href='https://www.openstreetmap.org/?mlat='+encodeURIComponent(lat)+'&mlon='+encodeURIComponent(lng)+'#map=16/'+encodeURIComponent(lat)+'/'+encodeURIComponent(lng);
+  const draw=()=>{if(!window.L)return;if(detailLeafletMap){detailLeafletMap.remove();detailLeafletMap=null;}detailLeafletMap=window.L.map(canvas,{scrollWheelZoom:false}).setView([lat,lng],15);window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(detailLeafletMap);window.L.marker([lat,lng]).addTo(detailLeafletMap).bindPopup('Emplacement de l’annonce').openPopup();setTimeout(()=>detailLeafletMap?.invalidateSize(),120);};
+  if(window.L)draw();else{const wait=setInterval(()=>{if(window.L){clearInterval(wait);draw();}},150);setTimeout(()=>clearInterval(wait),6000);}
 }
 function startProductChat(){
   document.getElementById('chatProductName').textContent=selectedMarketProduct.name;
