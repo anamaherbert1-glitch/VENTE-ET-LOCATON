@@ -1,9 +1,9 @@
 /** Types d'interface BUILDTRACE. Les données persistées utilisent public.products. */
 
 export type ListingType = 'sale' | 'rent' | 'both';
-export type ListingStatus = 'draft' | 'published' | 'archived';
+export type ListingStatus = 'draft' | 'published' | 'archived' | 'rejected';
 export type ListingCondition = string;
-export type AccountType = 'particulier' | 'professionnel' | 'entreprise';
+export type AccountType = 'particulier' | 'professionnel' | 'entreprise' | 'individual' | 'pro' | 'business' | 'admin';
 
 export interface Profile {
   id: string;
@@ -42,6 +42,23 @@ export interface Listing {
   published_at: string | null;
   created_at: string;
   updated_at?: string;
+}
+
+export interface Favorite {
+  user_id: string;
+  listing_id: string;
+  created_at: string;
+}
+
+export interface SupportRequest {
+  id: string;
+  user_id: string | null;
+  kind: string;
+  subject: string;
+  body: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Conversation {
