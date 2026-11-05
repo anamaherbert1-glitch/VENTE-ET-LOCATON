@@ -2,16 +2,18 @@ import { supabase } from '../lib/supabase';
 import type { Conversation, Message } from '../types/database';
 
 export async function getOrCreateConversation(params: {
-  listingId: string;
+  productId: string;
   buyerId: string;
   sellerId: string;
+  productTitle?: string;
+  productOfferType?: string;
+  productPhotoPaths?: string[];
 }): Promise<Conversation> {
   const { data: existing, error: findError } = await supabase
     .from('conversations')
     .select('*')
-    .eq('listing_id', params.listingId)
+    .eq('product_id', params.productId)
     .eq('buyer_id', params.buyerId)
-    .eq('seller_id', params.sellerId)
     .maybeSingle();
 
   if (findError) throw findError;
@@ -20,9 +22,12 @@ export async function getOrCreateConversation(params: {
   const { data, error } = await supabase
     .from('conversations')
     .insert({
-      listing_id: params.listingId,
+      product_id: params.productId,
       buyer_id: params.buyerId,
       seller_id: params.sellerId,
+      product_title: params.productTitle ?? 'Annonce BUILDTRACE',
+      product_offer_type: params.productOfferType ?? 'sale',
+      product_photo_paths: params.productPhotoPaths ?? [],
     })
     .select('*')
     .single();
@@ -37,7 +42,7 @@ export async function listConversationsForUser(
     .from('conversations')
     .select('*')
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
-    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(100);
   if (error) throw error;
   return (data ?? []) as Conversation[];
@@ -66,16 +71,10 @@ export async function sendMessage(params: {
     .insert({
       conversation_id: params.conversationId,
       sender_id: params.senderId,
-      content: params.content.trim(),
+      body: params.content.trim(),
     })
     .select('*')
     .single();
   if (error) throw error;
-
-  await supabase
-    .from('conversations')
-    .update({ updated_at: new Date().toISOString() })
-    .eq('id', params.conversationId);
-
   return data as Message;
 }
