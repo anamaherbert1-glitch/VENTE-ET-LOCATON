@@ -2338,8 +2338,7 @@ async function openMarketProduct(name,price,kind,listing=null){
   }
   const p=selectedMarketProduct;
   const set=(id,value,fallback='Non renseigné')=>{const node=document.getElementById(id);if(node)node.textContent=value===0?'0':(value??'')!==''?String(value):fallback;};
-  const amount=p.listing_type==='rent'?p.rental_price_xof:p.sale_price_xof;
-  const displayPrice=amount!=null?Number(amount).toLocaleString('fr-FR')+' FCFA'+(p.listing_type==='rent'?' / '+(p.rental_period||'jour'):''):(p.price||price);
+  const displayPrice=formatBuildtraceProductPrice(p);
   const typeLabel=p.listing_type==='rent'?'À louer':p.listing_type==='both'?'Vente & location':p.listing_type==='sale'?'À vendre':kind;
   p.name=p.title||name;p.price=displayPrice;p.kind=typeLabel+' · '+(p.location||'');window.BUILDTRACE_SELECTED_LISTING=p;
   set('detailName',p.name);set('detailPrice',displayPrice);set('detailKind',p.kind);
@@ -2568,17 +2567,39 @@ async function openConversation(id){
 <script type="module">
 import { supabase as sb } from './src/lib/supabase';
 let user=null, mode='signup'; const el=id=>document.getElementById(id);
-window.BUILDTRACE_GET_LISTING_DETAIL=async listingId=>{
-  const {data:listing,error}=await sb.from('listings').select('*').eq('id',listingId).eq('status','published').maybeSingle();
-  if(error)throw error;
-  if(!listing)throw Error('Cette annonce n’est plus disponible.');
-  let profile=null;
-  if(listing.owner_id){
-    const result=await sb.from('profiles').select('full_name,company_name,phone,city').eq('id',listing.owner_id).maybeSingle();
-    if(result.error)console.warn('Profil vendeur indisponible :',result.error.message);
-    profile=result.data||null;
+function normalizeBuildtraceProduct(row){
+  if(!row)return null;
+  const listingType=row.offer_type==='rental'?'rent':row.offer_type;
+  return {
+    ...row,
+    listing_type:listingType,
+    location:row.city||'',
+    photo_urls:Array.isArray(row.photo_paths)?row.photo_paths:[],
+    sale_price_xof:row.sale_price_xof??(listingType==='rent'?null:row.price_xof),
+    rental_price_xof:row.rental_price_xof??(listingType==='sale'?null:row.price_xof),
+    rental_period:row.rental_period||'jour',
+    published_at:row.created_at,
+    condition:row.condition||'',
+    dimensions:row.dimensions||''
+  };
+}
+function formatBuildtraceProductPrice(item){
+  const sale=item.sale_price_xof;
+  const rental=item.rental_price_xof;
+  if(item.listing_type==='both'&&sale!=null&&rental!=null){
+    return Number(sale).toLocaleString('fr-FR')+' FCFA · '+Number(rental).toLocaleString('fr-FR')+' FCFA / '+(item.rental_period||'jour');
   }
-  return {listing,profile};
+  if(item.listing_type==='rent'){
+    return Number(rental??item.price_xof??0).toLocaleString('fr-FR')+' FCFA / '+(item.rental_period||'jour');
+  }
+  return Number(sale??item.price_xof??0).toLocaleString('fr-FR')+' FCFA';
+}
+window.BUILDTRACE_GET_LISTING_DETAIL=async productId=>{
+  const {data,error}=await sb.from('public_products').select('*').eq('id',productId).maybeSingle();
+  if(error)throw error;
+  if(!data)throw Error('Cette annonce n’est plus disponible ou son abonnement vendeur n’est plus actif.');
+  const listing=normalizeBuildtraceProduct(data);
+  return {listing,profile:{full_name:data.seller_name||'Vendeur BUILDTRACE',shop_name:null,phone:null,city:data.city||null}};
 };
 function status(msg,kind=''){const n=el('authStatus');if(n){n.textContent=msg;n.className='inline-status '+kind;}}
 window.setMode=m=>{mode=m==='l'?'login':'signup';const row=el('authFullName').closest('.fg');row.style.display=mode==='signup'?'':'none';el('authFullName').required=mode==='signup';el('asub').textContent=mode==='signup'?'Créer mon compte':'Se connecter';el('abox').classList.toggle('mode-r',mode==='signup');el('tl').classList.toggle('on',mode==='login');el('tr').classList.toggle('on',mode==='signup');el('afoot').innerHTML=mode==='signup'?'Vous avez déjà un compte ? <a href="#" onclick="setMode(\'l\');return false">Se connecter</a>':'Pas encore de compte ? <a href="#" onclick="setMode(\'r\');return false">Créer un compte</a>';status('');};
@@ -2674,7 +2695,7 @@ async function loadProfile(){
   el('profileEmail').textContent=user.email||'';
   el('profileInitials').textContent=name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
   el('profileRole').textContent=data?.account_type==='entreprise'?'Entreprise':'Utilisateur';
-  const {count:listCount}=await sb.from('listings').select('id',{count:'exact',head:true}).eq('owner_id',user.id);
+  const {count:listCount}=await sb.from('products').select('id',{count:'exact',head:true}).eq('owner_id',user.id);
   if(el('profileListingsCount'))el('profileListingsCount').textContent=String(listCount||0);
   if(el('profileFavoritesCount'))el('profileFavoritesCount').textContent=String(getFavoriteNames().length);
   const {count:chatCount}=await sb.from('conversations').select('id',{count:'exact',head:true}).or('buyer_id.eq.'+user.id+',seller_id.eq.'+user.id);
@@ -2705,39 +2726,157 @@ let activeAdIndex=0,adTimer=null;
 function renderAd(){const ad=BUILDTRACE_ADS[activeAdIndex],slot=el('homeAdCarousel');if(!slot)return;slot.style.backgroundImage='linear-gradient(90deg,rgba(4,20,14,.82),rgba(4,20,14,.22)),url("'+ad.image+'")';el('adTitle').textContent=ad.title;el('adDescription').textContent=ad.description;el('adDots').innerHTML=BUILDTRACE_ADS.map((_,i)=>'<i class="'+(i===activeAdIndex?'active':'')+'"></i>').join('');}
 window.changeAd=delta=>{activeAdIndex=(activeAdIndex+delta+BUILDTRACE_ADS.length)%BUILDTRACE_ADS.length;renderAd();};
 renderAd();if(adTimer)clearInterval(adTimer);adTimer=setInterval(()=>window.changeAd(1),5000);
-window.loadMyListings=async()=>{const list=el('myListingsList');if(!list)return;if(!user){list.innerHTML='<p class="account-note">Connectez-vous pour consulter vos annonces.</p>';return;}list.innerHTML='<p class="account-note">Chargement…</p>';const {data,error}=await sb.from('listings').select('*').eq('owner_id',user.id).order('created_at',{ascending:false});if(error){list.innerHTML='<p class="account-note">Erreur de chargement : '+error.message+'</p>';return;}list.innerHTML='';if(!data?.length){list.innerHTML='<div class="favorites-empty show"><strong>Aucune annonce pour le moment</strong><p>Publiez votre premier matériau pour le retrouver ici.</p><button class="account-primary" onclick="go(\'add\')">Ajouter un matériau</button></div>';return;}data.forEach(item=>{const card=document.createElement('article');card.className='listing-manage-card';card.dataset.myKind=item.listing_type==='rent'?'rent':'sale';const img=document.createElement('img');img.src=item.photo_urls?.[0]||'';img.alt=item.title;const info=document.createElement('div');info.className='info';const title=document.createElement('strong');title.textContent=item.title;const meta=document.createElement('p');meta.textContent=(item.listing_type==='rent'?'À louer':item.listing_type==='both'?'Vente et location':'À vendre')+' · '+item.location+' · '+item.status;const price=document.createElement('b');price.textContent=Number(item.listing_type==='rent'?item.rental_price_xof:item.sale_price_xof||0).toLocaleString('fr-FR')+' FCFA';info.append(title,meta,price);card.append(img,info);list.append(card);});};
-async function loadListings(){const {data,error}=await sb.from('listings').select('*').eq('status','published').order('created_at',{ascending:false}).limit(60);if(error){console.error('Listings:',error);return;}const grid=el('marketGrid');grid.querySelectorAll('[data-live-listing="true"]').forEach(n=>n.remove());const home=el('homeLiveListings');if(home)home.innerHTML='';(data||[]).forEach(item=>{const card=document.createElement('article');card.className='market-card';card.dataset.liveListing='true';card.dataset.kind=item.listing_type==='rent'?'rent':'sale';card.dataset.premium='false';card.dataset.name=item.title;const photo=document.createElement('div');photo.className='market-card-photo';if(item.photo_urls?.[0])photo.style.backgroundImage='url("'+item.photo_urls[0].replace(/["\\]/g,'')+'")';const tag=document.createElement('span');tag.className='market-kind';tag.textContent=item.listing_type==='rent'?'À louer':item.listing_type==='both'?'Vente & location':'À vendre';photo.append(tag);const body=document.createElement('div');body.className='market-card-body';const title=document.createElement('h3');title.textContent=item.title;const price=document.createElement('p');price.className='market-price';const amount=item.listing_type==='rent'?item.rental_price_xof:item.sale_price_xof;price.textContent=Number(amount||0).toLocaleString('fr-FR')+' FCFA'+(item.listing_type==='rent'?' / '+(item.rental_period||'jour'):'');const meta=document.createElement('p');meta.className='market-meta';meta.textContent='⌖ '+item.location+' · '+item.condition;const badge=document.createElement('span');badge.className='live-listing-badge';badge.textContent='Annonce BUILDTRACE';body.append(title,price,meta,badge);card.append(photo,body);card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label','Voir les détails de '+item.title);const openMarketListing=()=>window.openMarketProduct(item.title,price.textContent,tag.textContent+' · '+item.location,{...item});card.addEventListener('click',openMarketListing);card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openMarketListing();}});grid.prepend(card);if(home){const homeCard=document.createElement('article');homeCard.className='prod-card';const homePhoto=document.createElement('div');homePhoto.className='img';if(item.photo_urls?.[0])homePhoto.style.backgroundImage='url("'+item.photo_urls[0].replace(/["\\]/g,'')+'")';const homeBody=document.createElement('div');homeBody.className='body';const homeTitle=document.createElement('h3');homeTitle.textContent=item.title;const homeMeta=document.createElement('p');homeMeta.className='meta';homeMeta.textContent=(item.listing_type==='rent'?'À louer':item.listing_type==='both'?'Vente & location':'À vendre')+' · '+item.location;const homePrice=document.createElement('p');homePrice.className='price';homePrice.textContent=price.textContent;homeBody.append(homeTitle,homeMeta,homePrice);homeCard.append(homePhoto,homeBody);homeCard.setAttribute('role','button');homeCard.setAttribute('tabindex','0');homeCard.setAttribute('aria-label','Voir les détails de '+item.title);const openHomeListing=()=>window.openMarketProduct(item.title,price.textContent,tag.textContent+' · '+item.location,{...item});homeCard.addEventListener('click',openHomeListing);homeCard.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openHomeListing();}});home.prepend(homeCard);}});if(window.filterMarketplace)window.filterMarketplace();}
+window.loadMyListings=async()=>{
+  const list=el('myListingsList');if(!list)return;
+  if(!user){list.innerHTML='<p class="account-note">Connectez-vous pour consulter vos annonces.</p>';return;}
+  list.innerHTML='<p class="account-note">Chargement…</p>';
+  const {data,error}=await sb.from('products').select('*').eq('owner_id',user.id).order('created_at',{ascending:false});
+  if(error){list.innerHTML='<p class="account-note">Erreur de chargement : '+error.message+'</p>';return;}
+  list.innerHTML='';
+  if(!data?.length){list.innerHTML='<div class="favorites-empty show"><strong>Aucune annonce pour le moment</strong><p>Publiez votre premier matériau pour le retrouver ici.</p><button class="account-primary" onclick="go(\'add\')">Ajouter un matériau</button></div>';return;}
+  data.forEach(row=>{
+    const item=normalizeBuildtraceProduct(row);
+    const card=document.createElement('article');card.className='listing-manage-card';
+    card.dataset.myKind=item.listing_type==='rent'?'rent':'sale';
+    const img=document.createElement('img');img.src=item.photo_urls[0]||'';img.alt=item.title;
+    const info=document.createElement('div');info.className='info';
+    const title=document.createElement('strong');title.textContent=item.title;
+    const meta=document.createElement('p');meta.textContent=(item.listing_type==='rent'?'À louer':item.listing_type==='both'?'Vente et location':'À vendre')+' · '+item.location+' · '+item.status;
+    const price=document.createElement('b');price.textContent=formatBuildtraceProductPrice(item);
+    info.append(title,meta,price);card.append(img,info);list.append(card);
+  });
+};
+async function loadListings(){
+  const {data,error}=await sb.from('public_products').select('*').order('created_at',{ascending:false}).limit(60);
+  if(error){console.error('Produits BUILDTRACE:',error);return;}
+  const grid=el('marketGrid');
+  grid.querySelectorAll('[data-live-listing="true"]').forEach(n=>n.remove());
+  const home=el('homeLiveListings');if(home)home.innerHTML='';
+  (data||[]).forEach(row=>{
+    const item=normalizeBuildtraceProduct(row);
+    const priceText=formatBuildtraceProductPrice(item);
+    const kindLabel=item.listing_type==='rent'?'À louer':item.listing_type==='both'?'Vente & location':'À vendre';
+    const card=document.createElement('article');card.className='market-card';card.dataset.liveListing='true';
+    card.dataset.kind=item.listing_type==='rent'?'rent':'sale';card.dataset.premium='false';card.dataset.name=item.title;
+    const photo=document.createElement('div');photo.className='market-card-photo';
+    if(item.photo_urls[0])photo.style.backgroundImage='url("'+item.photo_urls[0].replace(/["\\]/g,'')+'")';
+    const tag=document.createElement('span');tag.className='market-kind';tag.textContent=kindLabel;photo.append(tag);
+    const body=document.createElement('div');body.className='market-card-body';
+    const title=document.createElement('h3');title.textContent=item.title;
+    const price=document.createElement('p');price.className='market-price';price.textContent=priceText;
+    const meta=document.createElement('p');meta.className='market-meta';meta.textContent='⌖ '+(item.location||'Localisation non précisée')+(item.condition?' · '+item.condition:'');
+    const badge=document.createElement('span');badge.className='live-listing-badge';badge.textContent='Annonce BUILDTRACE';
+    body.append(title,price,meta,badge);card.append(photo,body);
+    card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label','Voir les détails de '+item.title);
+    const open=()=>window.openMarketProduct(item.title,priceText,kindLabel+' · '+item.location,{...item});
+    card.addEventListener('click',open);card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}});
+    grid.prepend(card);
+    if(home){
+      const homeCard=document.createElement('article');homeCard.className='prod-card';
+      const homePhoto=document.createElement('div');homePhoto.className='img';
+      if(item.photo_urls[0])homePhoto.style.backgroundImage='url("'+item.photo_urls[0].replace(/["\\]/g,'')+'")';
+      const homeBody=document.createElement('div');homeBody.className='body';
+      const homeTitle=document.createElement('h3');homeTitle.textContent=item.title;
+      const homeMeta=document.createElement('p');homeMeta.className='meta';homeMeta.textContent=kindLabel+' · '+item.location;
+      const homePrice=document.createElement('p');homePrice.className='price';homePrice.textContent=priceText;
+      homeBody.append(homeTitle,homeMeta,homePrice);homeCard.append(homePhoto,homeBody);
+      homeCard.setAttribute('role','button');homeCard.setAttribute('tabindex','0');homeCard.setAttribute('aria-label','Voir les détails de '+item.title);
+      homeCard.addEventListener('click',open);homeCard.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}});
+      home.prepend(homeCard);
+    }
+  });
+  if(window.filterMarketplace)window.filterMarketplace();
+}
 window.BUILDTRACE_LOAD_LISTINGS=loadListings;window.BUILDTRACE_CURRENT_USER=()=>user;
-window.submitProduct=async event=>{event.preventDefault();const statusEl=el('publishStatus'),files=Array.from(el('productPhotos').files||[]);const say=(m,k='')=>{statusEl.textContent=m;statusEl.className='inline-status '+k;};try{if(!user){say('Connectez-vous avant de publier votre annonce.','warning');window.go('auth');return false;}if(!files.length)throw Error('Ajoutez au moins une photo.');if(files.some(f=>f.size>5*1024*1024))throw Error('Chaque photo doit peser 5 Mo maximum.');const mode=document.querySelector('.mode-choice.selected')?.dataset.mode||'sale';say('Envoi des photos et enregistrement de votre annonce…');const urls=[];for(const file of files.slice(0,6)){const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');const path=user.id+'/'+crypto.randomUUID()+'.'+ext;const {error}=await sb.storage.from('buildtrace-listings').upload(path,file,{contentType:file.type,upsert:false});if(error)throw error;urls.push(sb.storage.from('buildtrace-listings').getPublicUrl(path).data.publicUrl);}const payload={category:el('productCategory').value,title:el('productTitle').value.trim(),description:el('productDescription').value.trim(),quantity:Number(el('productQuantity').value),unit:el('productUnit').value,dimensions:el('productDimensions').value.trim()||null,condition:el('productCondition').value,listing_type:mode,sale_price_xof:mode==='rent'?null:Number(el('salePrice').value),rental_price_xof:mode==='sale'?null:Number(el('rentalPrice').value),rental_period:mode==='sale'?null:el('rentalPeriod').value,location:el('productLocation').value.trim(),photo_urls:urls,status:'published',published_at:new Date().toISOString()};const {error}=await sb.from('listings').insert({...payload,owner_id:user.id});if(error)throw error;say('Annonce publiée avec succès !','success');el('productForm').reset();el('productPhotos').value='';el('photoPreview').innerHTML='';el('photoCount').textContent='Touchez pour sélectionner vos photos';await loadListings();setTimeout(()=>window.go('market'),900);}catch(err){say(err.message||'Impossible de publier cette annonce.','error');}return false;};
+window.submitProduct=async event=>{
+  event.preventDefault();
+  const statusEl=el('publishStatus'),files=Array.from(el('productPhotos').files||[]);
+  const say=(message,kind='')=>{statusEl.textContent=message;statusEl.className='inline-status '+kind;};
+  try{
+    if(!user){say('Connectez-vous avant de publier votre annonce.','warning');window.go('auth');return false;}
+    if(!files.length)throw Error('Ajoutez au moins une photo.');
+    if(files.some(file=>file.size>5*1024*1024))throw Error('Chaque photo doit peser 5 Mo maximum.');
+    const mode=document.querySelector('.mode-choice.selected')?.dataset.mode||'sale';
+    const salePrice=mode==='rent'?null:Number(el('salePrice').value);
+    const rentalPrice=mode==='sale'?null:Number(el('rentalPrice').value);
+    const primaryPrice=mode==='rent'?rentalPrice:salePrice;
+    if(!Number.isFinite(primaryPrice)||primaryPrice<=0)throw Error('Indiquez un prix valide.');
+    if(mode==='both'&&(!Number.isFinite(rentalPrice)||rentalPrice<=0))throw Error('Indiquez également le tarif de location.');
+    say('Envoi des photos et enregistrement de votre annonce…');
+    const urls=[];
+    for(const file of files.slice(0,6)){
+      const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
+      const path=user.id+'/'+crypto.randomUUID()+'.'+ext;
+      const {error}=await sb.storage.from('buildtrace-listings').upload(path,file,{contentType:file.type,upsert:false});
+      if(error)throw error;
+      urls.push(sb.storage.from('buildtrace-listings').getPublicUrl(path).data.publicUrl);
+    }
+    const payload={
+      owner_id:user.id,
+      offer_type:mode==='rent'?'rental':mode,
+      title:el('productTitle').value.trim(),
+      category:el('productCategory').value,
+      description:el('productDescription').value.trim(),
+      price_xof:primaryPrice,
+      sale_price_xof:salePrice,
+      rental_price_xof:rentalPrice,
+      rental_period:mode==='sale'?null:el('rentalPeriod').value,
+      quantity:Number(el('productQuantity').value),
+      unit:el('productUnit').value,
+      dimensions:el('productDimensions').value.trim()||null,
+      condition:el('productCondition').value,
+      city:el('productLocation').value.trim(),
+      photo_paths:urls,
+      status:'published'
+    };
+    const {error}=await sb.from('products').insert(payload);
+    if(error)throw error;
+    say('Annonce publiée avec succès !','success');
+    el('productForm').reset();el('productPhotos').value='';el('photoPreview').innerHTML='';
+    el('photoCount').textContent='Touchez pour sélectionner vos photos';
+    await loadListings();
+    setTimeout(()=>window.go('market'),900);
+  }catch(err){
+    say(err.message||'Impossible de publier cette annonce. Vérifiez votre abonnement et réessayez.','error');
+  }
+  return false;
+};
 
 let activeChatId=null, activeChatChannel=null, activeChatPeer=null;
 const chatText=(id,msg,kind='')=>{const n=el(id);if(n){n.textContent=msg||'';n.className='inline-status '+kind;}};
 const initialsFor=name=>(name||'Utilisateur').trim().split(/\\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
 const chatTime=value=>new Date(value).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-async function getOrCreateConversation(listing){
+async function getOrCreateConversation(product){
   if(!user)throw Error('Connectez-vous pour contacter le vendeur.');
-  if(!listing?.id||!listing?.owner_id)throw Error('Cette annonce de démonstration n’est pas reliée à un vendeur. Choisissez une annonce publiée sur BUILDTRACE.');
-  if(listing.owner_id===user.id)throw Error('Vous ne pouvez pas vous envoyer un message sur votre propre annonce.');
-  const find=()=>sb.from('conversations').select('*').eq('listing_id',listing.id).eq('buyer_id',user.id).eq('seller_id',listing.owner_id).maybeSingle();
+  if(!product?.id||!product?.owner_id)throw Error('Cette annonce n’est pas reliée à un vendeur.');
+  if(product.owner_id===user.id)throw Error('Vous ne pouvez pas vous envoyer un message sur votre propre annonce.');
+  const find=()=>sb.from('conversations').select('*').eq('product_id',product.id).eq('buyer_id',user.id).maybeSingle();
   let {data,error}=await find();if(error)throw error;
   if(data)return data;
-  const created=await sb.from('conversations').insert({listing_id:listing.id,buyer_id:user.id,seller_id:listing.owner_id}).select('*').single();
+  const created=await sb.from('conversations').insert({
+    product_id:product.id,buyer_id:user.id,seller_id:product.owner_id,
+    product_title:product.title||'Annonce BUILDTRACE',
+    product_offer_type:product.offer_type||'sale',
+    product_photo_paths:product.photo_paths||product.photo_urls||[],
+    buyer_name:user.user_metadata?.full_name||'Acheteur',
+    seller_name:product.seller_name||'Vendeur'
+  }).select('*').single();
   if(!created.error)return created.data;
   if(created.error.code==='23505'){const retry=await find();if(!retry.error&&retry.data)return retry.data;}
   throw created.error;
 }
-function renderChatMessages(rows){
+function renderChatMessages(rows){function renderChatMessages(rows){
   const wrap=el('chatMessages');wrap.innerHTML='';
   (rows||[]).forEach(row=>{
     const bubble=document.createElement('div');bubble.className='chat-bubble'+(row.sender_id===user?.id?' mine':'');
-    bubble.textContent=row.content;
+    bubble.textContent=row.body;
     const time=document.createElement('span');time.className='chat-time';time.textContent=chatTime(row.created_at);bubble.appendChild(time);wrap.appendChild(bubble);
   });
   const content=document.querySelector('.chat-content');if(content)content.scrollTop=content.scrollHeight;
 }
 async function refreshChatMessages(){
   if(!activeChatId)return;
-  const {data,error}=await sb.from('messages').select('id,conversation_id,sender_id,content,created_at').eq('conversation_id',activeChatId).order('created_at',{ascending:true}).limit(200);
+  const {data,error}=await sb.from('messages').select('id,conversation_id,sender_id,body,created_at').eq('conversation_id',activeChatId).order('created_at',{ascending:true}).limit(200);
   if(error){chatText('chatStatus','Impossible de charger les messages : '+error.message,'error');return;}
   renderChatMessages(data);
 }
@@ -2746,26 +2885,27 @@ async function loadConversationList(){
   list.innerHTML='';
   if(!user){el('conversationCount').textContent='0 discussion';el('conversationEmpty').textContent='Connectez-vous pour consulter vos messages.';el('conversationEmpty').style.display='block';return;}
   chatText('conversationStatus','Chargement des conversations…');
-  const {data,error}=await sb.from('conversations').select('*').order('updated_at',{ascending:false}).limit(100);
+  const {data,error}=await sb.from('conversations').select('*').order('created_at',{ascending:false}).limit(100);
   if(error){chatText('conversationStatus','Erreur de chargement : '+error.message,'error');return;}
-  const conversations=data||[];el('conversationCount').textContent=conversations.length+' discussion'+(conversations.length>1?'s':'');
+  const conversations=data||[];
+  el('conversationCount').textContent=conversations.length+' discussion'+(conversations.length>1?'s':'');
   if(!conversations.length){el('conversationEmpty').textContent='Aucune conversation pour le moment. Contactez un vendeur depuis une annonce pour commencer.';el('conversationEmpty').style.display='block';chatText('conversationStatus','');return;}
   el('conversationEmpty').style.display='none';chatText('conversationStatus','');
   for(const convo of conversations){
     const peerId=convo.buyer_id===user.id?convo.seller_id:convo.buyer_id;
-    const [profileRes,listingRes,messageRes]=await Promise.all([
-      sb.from('profiles').select('full_name,company_name').eq('id',peerId).maybeSingle(),
-      convo.listing_id?sb.from('listings').select('title').eq('id',convo.listing_id).maybeSingle():Promise.resolve({data:null}),
-      sb.from('messages').select('content,created_at').eq('conversation_id',convo.id).order('created_at',{ascending:false}).limit(1).maybeSingle()
+    const [profileRes,messageRes]=await Promise.all([
+      sb.from('profiles').select('full_name,shop_name').eq('id',peerId).maybeSingle(),
+      sb.from('messages').select('body,created_at').eq('conversation_id',convo.id).order('created_at',{ascending:false}).limit(1).maybeSingle()
     ]);
-    const name=profileRes.data?.company_name||profileRes.data?.full_name||'Utilisateur BUILDTRACE';
-    const preview=messageRes.data?.content||'Conversation créée · Envoyez le premier message';
-    const row=document.createElement('button');row.type='button';row.className='conversation';row.dataset.search=(name+' '+preview+' '+(listingRes.data?.title||'')).toLocaleLowerCase('fr');
+    const name=profileRes.data?.shop_name||profileRes.data?.full_name||'Utilisateur BUILDTRACE';
+    const preview=messageRes.data?.body||'Conversation créée · Envoyez le premier message';
+    const row=document.createElement('button');row.type='button';row.className='conversation';
+    row.dataset.search=(name+' '+preview+' '+(convo.product_title||'')).toLocaleLowerCase('fr');
     const avatar=document.createElement('span');avatar.className='conversation-avatar';avatar.textContent=initialsFor(name);
     const main=document.createElement('span');main.className='conversation-main';
     const strong=document.createElement('strong');strong.textContent=name;
     const p=document.createElement('p');p.textContent=preview;
-    const small=document.createElement('small');small.className='conversation-product';small.textContent=listingRes.data?.title||'Échange BUILDTRACE';
+    const small=document.createElement('small');small.className='conversation-product';small.textContent=convo.product_title||'Échange BUILDTRACE';
     main.append(strong,p,small);
     const meta=document.createElement('span');meta.className='conversation-meta';meta.textContent=messageRes.data?.created_at?chatTime(messageRes.data.created_at):'Nouveau';
     row.append(avatar,main,meta);row.addEventListener('click',()=>window.BUILDTRACE_OPEN_CONVERSATION(convo.id));list.appendChild(row);
@@ -2777,14 +2917,31 @@ window.BUILDTRACE_OPEN_CONVERSATION=async id=>{
   const {data:convo,error}=await sb.from('conversations').select('*').eq('id',id).maybeSingle();
   if(error||!convo){chatText('conversationStatus',error?.message||'Conversation introuvable.','error');return;}
   activeChatId=convo.id;activeChatPeer=convo.buyer_id===user.id?convo.seller_id:convo.buyer_id;
-  const {data:profile}=await sb.from('profiles').select('full_name,company_name').eq('id',activeChatPeer).maybeSingle();
-  const name=profile?.company_name||profile?.full_name||'Utilisateur BUILDTRACE';
+  const {data:profile}=await sb.from('profiles').select('full_name,shop_name').eq('id',activeChatPeer).maybeSingle();
+  const name=profile?.shop_name||profile?.full_name||'Utilisateur BUILDTRACE';
   el('chatContactName').textContent=name;el('chatContactInitials').textContent=initialsFor(name);
   el('chatContactStatus').textContent='Conversation BUILDTRACE';
-  if(convo.listing_id){const {data:listing}=await sb.from('listings').select('title,photo_urls,sale_price_xof,rental_price_xof,listing_type,rental_period').eq('id',convo.listing_id).maybeSingle();if(listing){el('chatProductName').textContent=listing.title;const price=listing.listing_type==='rent'?listing.rental_price_xof:listing.sale_price_xof;el('chatProductPrice').textContent=Number(price||0).toLocaleString('fr-FR')+' FCFA';if(listing.photo_urls?.[0])el('chatProductImage').src=listing.photo_urls[0];}}
+  el('chatProductName').textContent=convo.product_title||'Annonce BUILDTRACE';
+  const {data:product}=await sb.from('public_products').select('title,photo_paths,price_xof,offer_type,rental_price_xof,rental_period,sale_price_xof').eq('id',convo.product_id).maybeSingle();
+  if(product){
+    const normalized=normalizeBuildtraceProduct(product);
+    el('chatProductName').textContent=normalized.title;
+    el('chatProductPrice').textContent=formatBuildtraceProductPrice(normalized);
+    if(normalized.photo_urls[0])el('chatProductImage').src=normalized.photo_urls[0];
+  }else{
+    el('chatProductPrice').textContent='Annonce associée';
+    const snapshot=convo.product_photo_paths||[];
+    if(snapshot[0])el('chatProductImage').src=snapshot[0];
+  }
   go('chat');chatText('chatStatus','');await refreshChatMessages();
   if(activeChatChannel)await sb.removeChannel(activeChatChannel);
-  activeChatChannel=sb.channel('buildtrace-chat-'+activeChatId).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'conversation_id=eq.'+activeChatId},payload=>{if(payload.new?.conversation_id===activeChatId)refreshChatMessages();}).subscribe((state)=>{if(state==='CHANNEL_ERROR'||state==='TIMED_OUT')chatText('chatStatus','Connexion instantanée interrompue. Les messages seront actualisés à la réouverture.','warning');});
+  activeChatChannel=sb.channel('buildtrace-chat-'+activeChatId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'conversation_id=eq.'+activeChatId},payload=>{
+      if(payload.new?.conversation_id===activeChatId)refreshChatMessages();
+    })
+    .subscribe(state=>{
+      if(state==='CHANNEL_ERROR'||state==='TIMED_OUT')chatText('chatStatus','Connexion instantanée interrompue. Les messages seront actualisés à la réouverture.','warning');
+    });
 };
 window.startProductChat=async()=>{
   try{chatText('chatStatus','Ouverture de la conversation…');const listing=window.BUILDTRACE_SELECTED_LISTING||selectedMarketProduct;const convo=await getOrCreateConversation(listing);await loadConversationList();await window.BUILDTRACE_OPEN_CONVERSATION(convo.id);}
@@ -2795,7 +2952,7 @@ window.sendChatMessage=async event=>{
   if(!content||!activeChatId)return;
   if(!user){chatText('chatStatus','Reconnectez-vous pour envoyer un message.','error');return;}
   const button=event.submitter||document.querySelector('.chat-compose button');if(button)button.disabled=true;
-  try{const {error}=await sb.from('messages').insert({conversation_id:activeChatId,sender_id:user.id,content});if(error)throw error;input.value='';chatText('chatStatus','');await refreshChatMessages();await sb.from('conversations').update({updated_at:new Date().toISOString()}).eq('id',activeChatId);}
+  try{const {error}=await sb.from('messages').insert({conversation_id:activeChatId,sender_id:user.id,body:content});if(error)throw error;input.value='';chatText('chatStatus','');await refreshChatMessages();}
   catch(err){chatText('chatStatus',err.message||'Message non envoyé. Réessayez.','error');}
   finally{if(button)button.disabled=false;}
 };
