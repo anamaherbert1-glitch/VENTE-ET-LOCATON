@@ -2398,7 +2398,8 @@ function go(id){
   document.getElementById('s-'+id).classList.add('active');
   try{if(id==='welcome'||id==='auth')localStorage.removeItem('buildtrace_last_screen');else localStorage.setItem('buildtrace_last_screen',id);}catch(_){}
   if(id==='favorites')renderFavorites();if(id==='my-listings'&&window.loadMyListings)window.loadMyListings();
-  if(id==='market'||id==='search')syncFavoriteButtons();\n  if(id==='map'&&window.BUILDTRACE_INIT_MAP)window.BUILDTRACE_INIT_MAP();
+  if(id==='market'||id==='search')syncFavoriteButtons();
+  if(id==='map'&&window.BUILDTRACE_INIT_MAP)window.BUILDTRACE_INIT_MAP();
   if(id==='messages'&&window.BUILDTRACE_LOAD_CONVERSATIONS)window.BUILDTRACE_LOAD_CONVERSATIONS();
   window.scrollTo(0,0);
 }
@@ -2788,7 +2789,8 @@ async function loadListings(){
   if(error){console.error('Produits BUILDTRACE:',error);return;}
   const grid=el('marketGrid');
   grid.querySelectorAll('[data-live-listing="true"]').forEach(n=>n.remove());
-  const home=el('homeLiveListings');if(home)home.innerHTML='';\n  if(window.BUILDTRACE_SET_MAP_LISTINGS)window.BUILDTRACE_SET_MAP_LISTINGS(data||[]);
+  const home=el('homeLiveListings');if(home)home.innerHTML='';
+  if(window.BUILDTRACE_SET_MAP_LISTINGS)window.BUILDTRACE_SET_MAP_LISTINGS(data||[]);
   (data||[]).forEach(row=>{
     const item=normalizeBuildtraceProduct(row);
     const priceText=formatBuildtraceProductPrice(item);
