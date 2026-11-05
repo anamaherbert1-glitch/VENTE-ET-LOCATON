@@ -2354,7 +2354,7 @@ async function openMarketProduct(name,price,kind,listing=null){
   if(seller)seller.textContent='Chargement du vendeur…';
   if(sellerSub)sellerSub.textContent='Profil vendeur BUILDTRACE';
   if(p.owner_id){
-    const sellerName=sellerProfile?.company_name||sellerProfile?.full_name||'Vendeur BUILDTRACE';
+    const sellerName=sellerProfile?.shop_name||sellerProfile?.full_name||'Vendeur BUILDTRACE';
     if(seller)seller.textContent=sellerName;
     if(sellerSub)sellerSub.textContent=[sellerProfile?.phone?'Téléphone : '+sellerProfile.phone:null,sellerProfile?.city].filter(Boolean).join(' · ')||'Vendeur sur BUILDTRACE';
     p.seller_name=sellerName;p.seller_phone=sellerProfile?.phone||null;
