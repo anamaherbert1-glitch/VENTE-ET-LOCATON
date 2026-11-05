@@ -2865,7 +2865,7 @@ async function getOrCreateConversation(product){
   if(created.error.code==='23505'){const retry=await find();if(!retry.error&&retry.data)return retry.data;}
   throw created.error;
 }
-function renderChatMessages(rows){function renderChatMessages(rows){
+function renderChatMessages(rows){
   const wrap=el('chatMessages');wrap.innerHTML='';
   (rows||[]).forEach(row=>{
     const bubble=document.createElement('div');bubble.className='chat-bubble'+(row.sender_id===user?.id?' mine':'');
