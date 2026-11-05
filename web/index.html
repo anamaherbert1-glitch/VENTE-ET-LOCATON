@@ -1764,6 +1764,134 @@ body.dark-mode .bn .ni,body.dark-mode .market-bottom-nav .ni,body.dark-mode .sea
 body.dark-mode .bn .ni.on,body.dark-mode .market-bottom-nav .ni.on,body.dark-mode .search-bottom .ni.on{color:var(--bt-green)!important;background:#111a14!important;border-color:#315640!important}
 @media(prefers-color-scheme:dark){body:not(.dark-mode){color-scheme:light}}
 
+
+/* BUILDTRACE — correction globale finale des thèmes clair/sombre */
+:root{
+  --bt-page:#f3f7f4;
+  --bt-surface:#ffffff;
+  --bt-surface-raised:#ffffff;
+  --bt-surface-soft:#edf4ef;
+  --bt-text:#173326;
+  --bt-muted:#52685c;
+  --bt-border:#d5e1d9;
+  --bt-accent:#087a43;
+  --bt-accent-strong:#079b50;
+  --bt-control:#eaf4ed;
+  color-scheme:light;
+}
+body.dark-mode{
+  --bt-page:#050806;
+  --bt-surface:#0d1510;
+  --bt-surface-raised:#111c15;
+  --bt-surface-soft:#17241b;
+  --bt-text:#f0f7f2;
+  --bt-muted:#b7c9bd;
+  --bt-border:#304638;
+  --bt-accent:#62e59b;
+  --bt-accent-strong:#31cf7c;
+  --bt-control:#17291e;
+  color-scheme:dark;
+}
+html,body{background:var(--bt-page)!important;color:var(--bt-text)!important}
+.screen:not(#s-welcome){background:var(--bt-page)!important;color:var(--bt-text)!important}
+.screen:not(#s-welcome) :is(h1,h2,h3,h4,h5,h6,.section-head h2,.market-summary strong,.messages-section-title strong,.search-result-head strong,.account-section-label,.product-form h3,.detail-section h3){
+  color:var(--bt-text)!important;
+}
+.screen:not(#s-welcome) :is(p,small,label,li,.meta,.muted,.description,.subtitle,.account-note,.search-intro,.market-summary span,.market-meta,.market-card-foot,.conversation-meta,.conversation-main p,.conversation-product,.messages-section-title span,.search-result-head span,.form-note,.settings-description){
+  color:var(--bt-muted)!important;
+}
+/* Les en-têtes de marque conservent leur texte clair sur fond navy/vert. */
+:is(.home-header,.market-header,.messages-title,.chat-head,.account-cover,.account-page-head) :is(h1,h2,h3,p,small,strong,span,button){
+  color:#ffffff!important;
+}
+:is(.home-header,.market-header,.messages-title,.chat-head,.account-cover,.account-page-head) p,
+:is(.home-header,.market-header,.messages-title,.chat-head,.account-cover,.account-page-head) small{
+  color:#d5e5dc!important;
+}
+/* Tous les panneaux et fenêtres, y compris la feuille d'action hors des écrans. */
+:is(.sheet,.sheet-opt,.conversation,.conversation-empty,.feedback-box,.settings-card,.account-stats,.account-menu,.listing-manage-card,.favorites-toolbar,.favorites-empty,.plan-card,.detail-stat,.detail-section,.chat-product,.chat-compose,.messages-search-field,.search-head,.search-field,.search-extra,.market-search,.market-sort,.market-filter,.search-chip,.subpage-header,.photo-upload,.mode-choice,.product-form input,.product-form select,.product-form textarea,.feedback-box input,.feedback-box select,.feedback-box textarea){
+  background:var(--bt-surface)!important;
+  color:var(--bt-text)!important;
+  border-color:var(--bt-border)!important;
+}
+.sheet{box-shadow:0 -12px 36px rgba(0,0,0,.16)}
+.sheet h3,.sheet-opt strong,.sheet-opt div:last-child span{color:var(--bt-text)!important}
+.sheet-opt{background:var(--bt-surface-raised)!important}
+.sheet-opt:active{background:var(--bt-control)!important}
+:is(.search-field,.market-search,.messages-search-field) input,
+:is(.product-form input,.product-form select,.product-form textarea,.feedback-box input,.feedback-box select,.feedback-box textarea,.chat-compose input,.search-extra input,.search-extra select){
+  background:var(--bt-surface-soft)!important;
+  color:var(--bt-text)!important;
+  border-color:var(--bt-border)!important;
+  caret-color:var(--bt-accent)!important;
+}
+:is(input,textarea,select)::placeholder{color:var(--bt-muted)!important;opacity:1}
+.search-head,.subpage-header{background:var(--bt-surface)!important}
+.search-head-top h1,.search-intro,.search-result-head strong,.search-result-head span{color:var(--bt-text)!important}
+.search-back,.market-sort,.market-filter,.search-chip{color:var(--bt-text)!important}
+.market-filter.active,.search-chip.active{background:var(--bt-accent-strong)!important;color:#ffffff!important;border-color:var(--bt-accent-strong)!important}
+.market-card h3,.feed-grid .prod-card h3,.rec-item h3,.conversation-main strong,.detail-title-row h1,.detail-stat b,.detail-section h3,.detail-seller strong,.product-form>label,.form-two label,.feedback-box label{
+  color:var(--bt-text)!important;
+}
+.market-card,.feed-grid .prod-card,.rec-item,.market-card-body,.feed-grid .prod-card .body{
+  background:transparent!important;
+}
+.market-price,.feed-grid .prod-card .price,.rec-item .price,.detail-price,.detail-type,.conversation-product{
+  color:var(--bt-accent)!important;
+}
+.market-meta,.market-card-foot,.feed-grid .prod-card .meta,.rec-item .meta,.detail-section p,.detail-stat span,.detail-seller small,.account-stats span{
+  color:var(--bt-muted)!important;
+}
+.conversation-empty{border-style:solid!important}
+.messages-search-field{background:var(--bt-surface)!important}
+.messages-search-field input{background:transparent!important;color:var(--bt-text)!important}
+.market-search input{background:transparent!important;color:var(--bt-text)!important}
+.search-field input{background:transparent!important;color:var(--bt-text)!important}
+.market-sort svg,.market-search svg,.search-field svg{stroke:var(--bt-muted)!important}
+:is(.account-menu button,.account-menu a,.preference-row,.listing-actions button,.favorite-item-actions button){
+  background:var(--bt-surface)!important;color:var(--bt-text)!important;border-color:var(--bt-border)!important;
+}
+.account-menu button svg{stroke:var(--bt-accent)!important}
+.account-primary,.publish-btn,.ba,.detail-cta button,.chat-compose button{
+  background:var(--bt-accent-strong)!important;color:#ffffff!important;border-color:var(--bt-accent-strong)!important;
+}
+body.dark-mode :is(.sheet,.sheet-opt,.conversation,.conversation-empty,.feedback-box,.settings-card,.account-stats,.account-menu,.listing-manage-card,.favorites-toolbar,.favorites-empty,.detail-stat,.detail-section,.chat-product,.chat-compose,.messages-search-field,.search-head,.search-field,.search-extra,.market-search,.market-sort,.market-filter,.search-chip,.subpage-header,.photo-upload,.mode-choice,.product-form input,.product-form select,.product-form textarea,.feedback-box input,.feedback-box select,.feedback-box textarea){
+  background:var(--bt-surface)!important;color:var(--bt-text)!important;border-color:var(--bt-border)!important;
+}
+body.dark-mode :is(.sheet,.sheet-opt,.conversation-empty,.messages-search-field,.search-head,.search-field,.search-extra,.market-search,.market-sort,.market-filter,.search-chip,.subpage-header,.photo-upload,.mode-choice){
+  box-shadow:none!important;
+}
+body.dark-mode :is(.sheet-opt,.conversation-empty,.feedback-box,.settings-card,.account-stats,.account-menu,.listing-manage-card,.favorites-toolbar,.favorites-empty,.detail-stat,.detail-section,.chat-product,.chat-compose,.messages-search-field,.search-head,.search-field,.search-extra,.market-search,.market-sort,.market-filter,.search-chip,.subpage-header,.photo-upload,.mode-choice){
+  background:var(--bt-surface-raised)!important;
+}
+body.dark-mode :is(.search-head-top h1,.search-intro,.search-result-head strong,.search-result-head span,.sheet h3,.sheet-opt strong,.sheet-opt div:last-child span,.market-card h3,.feed-grid .prod-card h3,.rec-item h3,.conversation-main strong,.detail-title-row h1,.detail-stat b,.detail-section h3,.detail-seller strong,.product-form>label,.form-two label,.feedback-box label){
+  color:var(--bt-text)!important;
+}
+body.dark-mode :is(.messages-title,.chat-head,.home-header,.market-header,.account-cover,.account-page-head){background:#0b2117!important}
+body.dark-mode .sheet-opt .ico{background:#173b29!important}
+body.dark-mode .sheet-opt .ico svg{stroke:#43d88b!important}
+body.dark-mode .chat-bubble{background:#17291e!important;color:var(--bt-text)!important;border-color:var(--bt-border)!important}
+body.dark-mode .chat-bubble.mine{background:#087a43!important;color:#ffffff!important}
+body.dark-mode .detail-cta{background:var(--bt-surface)!important;border-color:var(--bt-border)!important}
+body.dark-mode .market-heart{color:var(--bt-text)!important;border-color:var(--bt-border)!important}
+body.dark-mode .bn,body.dark-mode .market-bottom-nav,body.dark-mode .search-bottom{
+  background:rgba(8,15,10,.98)!important;border-color:var(--bt-border)!important;
+}
+body.dark-mode .bn .ni,body.dark-mode .market-bottom-nav .ni,body.dark-mode .search-bottom .ni{color:var(--bt-muted)!important}
+body.dark-mode .bn .ni.on,body.dark-mode .market-bottom-nav .ni.on,body.dark-mode .search-bottom .ni.on{
+  color:var(--bt-accent)!important;background:var(--bt-control)!important;border-color:var(--bt-border)!important;
+}
+body:not(.dark-mode) .bn,body:not(.dark-mode) .market-bottom-nav,body:not(.dark-mode) .search-bottom{
+  background:rgba(255,255,255,.98)!important;border-color:var(--bt-border)!important;
+}
+body:not(.dark-mode) .bn .ni,body:not(.dark-mode) .market-bottom-nav .ni,body:not(.dark-mode) .search-bottom .ni{color:var(--bt-muted)!important}
+body:not(.dark-mode) .bn .ni.on,body:not(.dark-mode) .market-bottom-nav .ni.on,body:not(.dark-mode) .search-bottom .ni.on{
+  color:var(--bt-accent)!important;background:var(--bt-control)!important;border-color:var(--bt-border)!important;
+}
+@media(prefers-reduced-motion:no-preference){
+  .sheet,.sheet-opt,.conversation,.market-card,.feed-grid .prod-card{transition:background-color .18s ease,color .18s ease,border-color .18s ease}
+}
+
 </style>
 </head>
 <body>
