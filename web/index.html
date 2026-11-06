@@ -1735,6 +1735,10 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
 .home-feed-grid .prod-card{cursor:pointer}
 .home-feed-grid .prod-card:focus-visible{outline:3px solid #07844f;outline-offset:2px}
 .home-feed-empty{padding:28px 12px;text-align:center;color:#607267;font-size:13px}
+.home-feed-load{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 8px 32px;color:#607267;font-size:12px;text-align:center}
+.home-feed-load button{border:1px solid #cbd9d0;border-radius:22px;background:#fff;color:#174b32;font-weight:700;padding:10px 18px;cursor:pointer}
+.home-feed-load button:disabled{opacity:.55;cursor:wait}
+.home-feed-load button[hidden]{display:none}
 @media(min-width:768px){.home-feed-content{padding:24px 24px 40px}.home-feed-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -2197,6 +2201,10 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
   <main class="home-feed-content">
     <div class="home-feed-count" id="homeFeedCount" aria-live="polite">Chargement…</div>
     <div class="feed-grid home-feed-grid" id="homeFeedGrid"><p class="account-note">Chargement des annonces…</p></div>
+    <div class="home-feed-load" id="homeFeedLoad" aria-live="polite">
+      <span id="homeFeedLoadText">Faites défiler pour découvrir plus d’annonces.</span>
+      <button type="button" id="homeFeedLoadButton" onclick="loadMoreHomeFeedListings()">Charger plus</button>
+    </div>
     <p class="home-feed-empty" id="homeFeedEmpty" hidden>Aucune annonce publiée pour le moment.</p>
   </main>
 </div>
@@ -2440,6 +2448,7 @@ function submitFeedback(event){event.preventDefault();if(window.submitBuildtrace
 function hasSeenWelcome(){try{return localStorage.getItem('buildtrace_welcome_seen')==='1';}catch(_){return false;}}
 function markWelcomeSeen(){try{localStorage.setItem('buildtrace_welcome_seen','1');}catch(_){}}
 function go(id){
+  if(id!=='home-feed'&&window.BUILDTRACE_HOME_FEED_STOP)window.BUILDTRACE_HOME_FEED_STOP();
   const allowed=['welcome','auth','home','home-feed','search','market','map','detail','favorites','messages','chat','profile','my-listings','subscriptions','settings','feedback','add'];
   if(!allowed.includes(id)||!document.getElementById('s-'+id))return;
   // La vitrine est une introduction unique : dès sa première apparition, elle ne revient plus.
@@ -2839,6 +2848,8 @@ window.loadMyListings=async()=>{
   });
 };
 let homeFeedListings=null;
+const HOME_FEED_PAGE_SIZE=60;
+let homeFeedOffset=0,homeFeedHasMore=false,homeFeedLoading=false,homeFeedObserver=null;
 const homeFeedModes={
   new:{title:'Nouveaux matériaux',description:'Les dernières annonces de matériaux publiées.'},
   recent:{title:'Publications récentes',description:'Toutes les annonces récentes disponibles.'},
@@ -2869,9 +2880,10 @@ function renderHomeFeed(mode){
   grid.innerHTML='';
   const rows=homeFeedListings||[];
   rows.forEach(item=>grid.append(createHomeListingCard(item)));
-  if(count)count.textContent=rows.length+' annonce'+(rows.length>1?'s':'');
+  if(count)count.textContent=rows.length+' annonce'+(rows.length>1?'s':'')+(homeFeedHasMore?' · faites défiler pour en voir plus':'');
   if(empty)empty.hidden=rows.length>0;
   if(!rows.length)grid.innerHTML='<p class="account-note">Aucune annonce publiée pour le moment.</p>';
+  updateHomeFeedLoadControl();
 }
 async function openHomeFeed(mode){
   window.activeHomeFeedMode=homeFeedModes[mode]?mode:'new';
@@ -2882,12 +2894,16 @@ async function openHomeFeed(mode){
     await loadListings();
   }
   renderHomeFeed(window.activeHomeFeedMode);
+  setupHomeFeedInfiniteScroll();
 }
 window.openHomeFeed=openHomeFeed;
 async function loadListings(){
-  const {data,error}=await sb.from('public_products').select('*').order('created_at',{ascending:false}).limit(60);
+  homeFeedOffset=0;homeFeedHasMore=false;homeFeedLoading=false;
+  const {data,error}=await sb.from('public_products').select('*').order('created_at',{ascending:false}).range(0,HOME_FEED_PAGE_SIZE-1);
   if(error){console.error('Produits BUILDTRACE:',error);homeFeedListings=[];renderHomeFeed(window.activeHomeFeedMode||'new');return;}
   homeFeedListings=(data||[]).map(normalizeBuildtraceProduct).filter(Boolean);
+  homeFeedOffset=(data||[]).length;
+  homeFeedHasMore=(data||[]).length===HOME_FEED_PAGE_SIZE;
   const grid=el('marketGrid');
   grid.querySelectorAll('[data-live-listing="true"]').forEach(n=>n.remove());
   const home=el('homeLiveListings');if(home)home.innerHTML='';
@@ -2935,6 +2951,46 @@ async function loadListings(){
   if(document.getElementById('s-home-feed')?.classList.contains('active'))renderHomeFeed(window.activeHomeFeedMode||'new');
   if(window.filterMarketplace)window.filterMarketplace();
 }
+function updateHomeFeedLoadControl(message){
+  const text=el('homeFeedLoadText'),button=el('homeFeedLoadButton');
+  if(text)text.textContent=message||(homeFeedLoading?'Chargement des annonces…':homeFeedHasMore?'Faites défiler pour découvrir plus d’annonces.':'Toutes les annonces disponibles ont été affichées.');
+  if(button){button.hidden=!homeFeedHasMore&&!homeFeedLoading;button.disabled=homeFeedLoading;button.textContent=homeFeedLoading?'Chargement…':'Charger plus';}
+}
+async function loadMoreHomeFeedListings(){
+  if(homeFeedLoading||!homeFeedHasMore)return;
+  if(!document.getElementById('s-home-feed')?.classList.contains('active'))return;
+  homeFeedLoading=true;updateHomeFeedLoadControl();
+  try{
+    const start=homeFeedOffset,end=start+HOME_FEED_PAGE_SIZE-1;
+    const {data,error}=await sb.from('public_products').select('*').order('created_at',{ascending:false}).range(start,end);
+    if(error)throw error;
+    const rows=data||[];
+    const known=new Set((homeFeedListings||[]).map(item=>item.id));
+    const next=rows.map(normalizeBuildtraceProduct).filter(item=>item&&!known.has(item.id));
+    homeFeedListings=(homeFeedListings||[]).concat(next);
+    homeFeedOffset+=rows.length;
+    homeFeedHasMore=rows.length===HOME_FEED_PAGE_SIZE;
+    renderHomeFeed(window.activeHomeFeedMode||'new');
+    updateHomeFeedLoadControl();
+  }catch(error){
+    console.error('Chargement des annonces suivantes BUILDTRACE:',error);
+    updateHomeFeedLoadControl('Le chargement a échoué. Réessayez.');
+  }finally{
+    homeFeedLoading=false;
+    updateHomeFeedLoadControl();
+  }
+}
+function setupHomeFeedInfiniteScroll(){
+  if(homeFeedObserver){homeFeedObserver.disconnect();homeFeedObserver=null;}
+  const sentinel=el('homeFeedLoad');
+  if(!sentinel||!('IntersectionObserver' in window))return;
+  homeFeedObserver=new IntersectionObserver(entries=>{
+    if(entries.some(entry=>entry.isIntersecting)&&document.getElementById('s-home-feed')?.classList.contains('active'))loadMoreHomeFeedListings();
+  },{root:null,rootMargin:'500px 0px',threshold:0});
+  homeFeedObserver.observe(sentinel);
+}
+window.loadMoreHomeFeedListings=loadMoreHomeFeedListings;
+window.BUILDTRACE_HOME_FEED_STOP=()=>{if(homeFeedObserver){homeFeedObserver.disconnect();homeFeedObserver=null;}};
 window.BUILDTRACE_LOAD_LISTINGS=loadListings;window.BUILDTRACE_CURRENT_USER=()=>user;
 window.submitProduct=async event=>{
   event.preventDefault();
