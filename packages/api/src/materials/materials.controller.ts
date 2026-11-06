@@ -8,9 +8,9 @@ import {
   UseGuards,
   Request,
   Patch,
+import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { MaterialsService } from './materials.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { MaterialStatus } from '@prisma/client';
@@ -21,7 +21,7 @@ export class MaterialsController {
   constructor(private materialsService: MaterialsService) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Créer un matériau (brouillon)' })
   create(@Request() req: any, @Body() dto: CreateMaterialDto) {
@@ -30,7 +30,7 @@ export class MaterialsController {
 
 
   @Get('mine')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mes matériaux (tous statuts)' })
   findMine(@Request() req: any) {
@@ -66,7 +66,7 @@ export class MaterialsController {
   }
 
   @Patch(':id/publish')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Publier un matériau' })
   publish(@Param('id') id: string, @Request() req: any) {
