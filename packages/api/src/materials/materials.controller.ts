@@ -8,8 +8,8 @@ import {
   UseGuards,
   Request,
   Patch,
-import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 } from '@nestjs/common';
+import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { MaterialsService } from './materials.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
