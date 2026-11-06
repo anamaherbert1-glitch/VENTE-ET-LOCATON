@@ -1,14 +1,14 @@
 import {
   Controller, Get, Post, Body, Param, UseGuards, Request,
+import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { MessagesService } from './messages.service';
 import { SendMessageDto } from './dto/send-message.dto';
 
 @ApiTags('Messages')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(SupabaseAuthGuard)
 @Controller('messages')
 export class MessagesController {
   constructor(private messagesService: MessagesService) {}
