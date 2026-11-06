@@ -1,7 +1,7 @@
 import {
   Controller, Get, Post, Body, Param, UseGuards, Request,
-import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 } from '@nestjs/common';
+import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { MessagesService } from './messages.service';
 import { SendMessageDto } from './dto/send-message.dto';
