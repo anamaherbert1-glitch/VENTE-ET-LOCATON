@@ -1,14 +1,14 @@
 import {
   Controller, Get, Post, Body, Param, Patch, UseGuards, Request,
+import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { BuildingsService } from './buildings.service';
 import { CreateBuildingDto } from './dto/create-building.dto';
 
 @ApiTags('Buildings')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(SupabaseAuthGuard)
 @Controller('buildings')
 export class BuildingsController {
   constructor(private buildingsService: BuildingsService) {}
