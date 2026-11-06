@@ -1,35 +1,30 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+import { Controller, GoneException, Post } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
-
   @Post('register')
-  @ApiOperation({ summary: 'Inscription' })
-  @ApiResponse({ status: 201, description: 'Utilisateur créé' })
-  @ApiResponse({ status: 409, description: 'Email ou téléphone déjà utilisé' })
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  @ApiOperation({ summary: 'Inscription gérée exclusivement par Supabase Auth' })
+  register(): never {
+    throw new GoneException(
+      'Inscription désactivée sur cette API. Utilisez Supabase Auth depuis l’application BUILDTRACE.',
+    );
   }
 
   @Post('login')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Connexion' })
-  @ApiResponse({ status: 200, description: 'Connexion réussie' })
-  @ApiResponse({ status: 401, description: 'Identifiants incorrects' })
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  @ApiOperation({ summary: 'Connexion gérée exclusivement par Supabase Auth' })
+  login(): never {
+    throw new GoneException(
+      'Connexion désactivée sur cette API. Utilisez Supabase Auth depuis l’application BUILDTRACE.',
+    );
   }
 
   @Post('refresh')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Rafraîchir le token' })
-  refresh(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refresh(refreshToken);
+  @ApiOperation({ summary: 'Renouvellement de session géré par Supabase Auth' })
+  refresh(): never {
+    throw new GoneException(
+      'Renouvellement désactivé sur cette API. Utilisez le refresh token géré par Supabase Auth.',
+    );
   }
 }
