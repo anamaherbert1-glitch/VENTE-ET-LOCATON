@@ -2340,7 +2340,9 @@ async function openMarketProduct(name,price,kind,listing=null){
   p.name=p.title||name;p.price=displayPrice;p.kind=typeLabel+' · '+(p.location||'');window.BUILDTRACE_SELECTED_LISTING=p;
   set('detailName',p.name);set('detailPrice',displayPrice);set('detailKind',p.kind);
   set('detailDescription',p.description||p.details,'Aucune description détaillée fournie par le vendeur.');
-  set('detailLocation',p.location,'Localisation non précisée');set('detailCondition',p.condition,'Non précisé');
+  const hasPublicCoordinates=p.latitude!==null&&p.latitude!==undefined&&p.longitude!==null&&p.longitude!==undefined&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude));
+  set('detailLocation',p.location+(hasPublicCoordinates?' · La position partagée par le vendeur est affichée sur la carte.':' · Position exacte de la boutique non partagée.'),'Localisation non précisée');
+  set('detailCondition',p.condition,'Non précisé');
   renderDetailLocationMap(p);
   const quantity=[p.quantity,p.unit].filter(Boolean).join(' ');
   set('detailQuantity',quantity,'Non précisée');set('detailDimensions',p.dimensions,'Non précisées');
@@ -2379,9 +2381,13 @@ function renderDetailLocationMap(product){
   if(!section||!canvas)return;
   section.hidden=!hasCoords;
   if(!hasCoords){if(detailLeafletMap){detailLeafletMap.remove();detailLeafletMap=null;}return;}
-  if(label)label.textContent=[product.neighborhood,product.city].filter(Boolean).join(' · ')||'Coordonnées GPS de cette annonce';
+  if(label)label.textContent=[product.neighborhood,product.city].filter(Boolean).join(' · ')||'Coordonnées GPS partagées par le vendeur';
   if(external)external.href='https://www.openstreetmap.org/?mlat='+encodeURIComponent(lat)+'&mlon='+encodeURIComponent(lng)+'#map=16/'+encodeURIComponent(lat)+'/'+encodeURIComponent(lng);
-  const draw=()=>{if(!window.L)return;if(detailLeafletMap){detailLeafletMap.remove();detailLeafletMap=null;}detailLeafletMap=window.L.map(canvas,{scrollWheelZoom:false}).setView([lat,lng],15);window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(detailLeafletMap);window.L.marker([lat,lng]).addTo(detailLeafletMap).bindPopup('Emplacement de l’annonce').openPopup();setTimeout(()=>detailLeafletMap?.invalidateSize(),120);};
+  if(!canvas.dataset.openMapBound){
+    canvas.dataset.openMapBound='true';
+    canvas.addEventListener('click',()=>{if(external?.href&&external.href!=='#')window.open(external.href,'_blank','noopener,noreferrer');});
+  }
+  const draw=()=>{if(!window.L)return;if(detailLeafletMap){detailLeafletMap.remove();detailLeafletMap=null;}detailLeafletMap=window.L.map(canvas,{scrollWheelZoom:false}).setView([lat,lng],15);window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(detailLeafletMap);window.L.marker([lat,lng]).addTo(detailLeafletMap).bindPopup('Boutique du vendeur').openPopup();setTimeout(()=>detailLeafletMap?.invalidateSize(),120);};
   if(window.L)draw();else{const wait=setInterval(()=>{if(window.L){clearInterval(wait);draw();}},150);setTimeout(()=>clearInterval(wait),6000);}
 }
 function startProductChat(){
@@ -2674,6 +2680,8 @@ function normalizeBuildtraceProduct(row){
 function formatBuildtraceProductPrice(item){
   const sale=item.sale_price_xof;
   const rental=item.rental_price_xof;
+  // Les cartes de démonstration transmettent déjà un prix formaté (ex. « 45 000 FCFA »).
+  if(sale==null&&rental==null&&item.price_xof==null&&typeof item.price==='string'&&item.price.trim())return item.price.trim();
   if(item.listing_type==='both'&&sale!=null&&rental!=null){
     return Number(sale).toLocaleString('fr-FR')+' FCFA · '+Number(rental).toLocaleString('fr-FR')+' FCFA / '+(item.rental_period||'jour');
   }
