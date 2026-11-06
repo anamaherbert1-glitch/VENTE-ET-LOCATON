@@ -8,8 +8,8 @@ import {
   Request,
   UseInterceptors,
   UploadedFile,
-import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 } from '@nestjs/common';
+import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { MediaService } from './media.service';
