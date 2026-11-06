@@ -8,16 +8,16 @@ import {
   Request,
   UseInterceptors,
   UploadedFile,
+import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { MediaService } from './media.service';
 import { memoryStorage } from 'multer';
 
 @ApiTags('Media')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(SupabaseAuthGuard)
 @Controller('media')
 export class MediaController {
   constructor(private mediaService: MediaService) {}
