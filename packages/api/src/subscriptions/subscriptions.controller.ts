@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionPlan } from '@prisma/client';
 
-import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
 export class SubscriptionsController {
