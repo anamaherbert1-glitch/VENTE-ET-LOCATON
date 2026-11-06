@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionPlan } from '@prisma/client';
 
+import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
 export class SubscriptionsController {
@@ -16,7 +16,7 @@ export class SubscriptionsController {
   }
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mon abonnement actuel' })
   getMine(@Request() req: any) {
@@ -24,7 +24,7 @@ export class SubscriptionsController {
   }
 
   @Post('checkout')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(SupabaseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Initier un paiement d\'abonnement (CinetPay)' })
   checkout(@Request() req: any, @Body('plan') plan: SubscriptionPlan) {
