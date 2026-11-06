@@ -2335,7 +2335,7 @@ async function openMarketProduct(name,price,kind,listing=null){
   }
   const p=selectedMarketProduct;
   const set=(id,value,fallback='Non renseigné')=>{const node=document.getElementById(id);if(node)node.textContent=value===0?'0':(value??'')!==''?String(value):fallback;};
-  const displayPrice=formatBuildtraceProductPrice(p);
+  const displayPrice=typeof window.BUILDTRACE_FORMAT_PRODUCT_PRICE==='function'?window.BUILDTRACE_FORMAT_PRODUCT_PRICE(p):(p.price||price||'Prix à confirmer');
   const typeLabel=p.listing_type==='rent'?'À louer':p.listing_type==='both'?'Vente & location':p.listing_type==='sale'?'À vendre':kind;
   p.name=p.title||name;p.price=displayPrice;p.kind=typeLabel+' · '+(p.location||'');window.BUILDTRACE_SELECTED_LISTING=p;
   set('detailName',p.name);set('detailPrice',displayPrice);set('detailKind',p.kind);
@@ -2697,6 +2697,7 @@ window.BUILDTRACE_GET_LISTING_DETAIL=async productId=>{
   const listing=normalizeBuildtraceProduct(data);
   return {listing,profile:{full_name:data.seller_name||'Vendeur BUILDTRACE',shop_name:null,phone:null,city:data.city||null}};
 };
+window.BUILDTRACE_FORMAT_PRODUCT_PRICE=formatBuildtraceProductPrice;
 function status(msg,kind=''){const n=el('authStatus');if(n){n.textContent=msg;n.className='inline-status '+kind;}}
 window.setMode=m=>{mode=m==='l'?'login':'signup';const row=el('authFullName').closest('.fg');row.style.display=mode==='signup'?'':'none';el('authFullName').required=mode==='signup';el('asub').textContent=mode==='signup'?'Créer mon compte':'Se connecter';el('abox').classList.toggle('mode-r',mode==='signup');el('tl').classList.toggle('on',mode==='login');el('tr').classList.toggle('on',mode==='signup');el('afoot').innerHTML=mode==='signup'?'Vous avez déjà un compte ? <a href="#" onclick="setMode(\'l\');return false">Se connecter</a>':'Pas encore de compte ? <a href="#" onclick="setMode(\'r\');return false">Créer un compte</a>';status('');};
 async function ensureOwnProfile(authUser, fallbackName=''){
