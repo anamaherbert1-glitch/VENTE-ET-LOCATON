@@ -26,8 +26,15 @@ async function bootstrap() {
     }),
   );
 
+  const allowedOrigins = (
+    process.env.WEB_ORIGINS || 'https://marketplace-ivory-alpha.vercel.app'
+  )
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: true,
+    origin: allowedOrigins,
     credentials: true,
   });
 
