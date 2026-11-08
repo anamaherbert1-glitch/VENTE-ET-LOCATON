@@ -1986,6 +1986,28 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
 @media(min-width:520px){
  #s-home #homeRecentListings>.prod-card{flex-basis:30%;width:30%;min-width:30%;max-width:30%}
 }
+/* ===== Harmonisation thèmes clair/sombre et sous-titres accueil ===== */
+#s-home .section-head{display:block;position:relative;padding-right:62px;margin-bottom:12px}
+#s-home .section-head h2{margin:0;color:var(--bt-text,#10251a)}
+#s-home .section-head a{position:absolute;right:0;top:2px;white-space:nowrap}
+#s-home .section-subtitle{margin:5px 0 0;padding-left:12px;max-width:92%;font-size:11px;line-height:1.45;font-weight:500;color:#64756b}
+body.dark-mode #s-home .home-header,
+body.dark-mode #s-home .home-body{background:var(--bt-page)!important;color:var(--bt-text)}
+body.dark-mode #s-home .section-head h2{color:var(--bt-text)!important}
+body.dark-mode #s-home .section-subtitle{color:var(--bt-muted)!important}
+body.dark-mode #s-home .home-body .section{background:transparent}
+body.dark-mode #s-home .home-body .account-note{color:var(--bt-muted)}
+body.dark-mode #s-home .home-body .prod-card{background:var(--bt-card);border-color:var(--bt-border);color:var(--bt-text)}
+body.dark-mode #s-home .home-body .prod-card h3{color:var(--bt-text)}
+body.dark-mode #s-home .home-body .prod-card .meta{color:var(--bt-muted)}
+body.dark-mode #s-home .home-body .prod-card .price{color:#55e59b!important}
+body.dark-mode #s-home .bn{background:var(--bt-card);border-color:var(--bt-border)}
+body.dark-mode #s-home .bn .ni{color:var(--bt-muted)}
+body.dark-mode #s-home .bn .ni.on{color:#63e6a2}
+body.dark-mode .screen input:not([type="checkbox"]),
+body.dark-mode .screen textarea,
+body.dark-mode .screen select{color-scheme:dark}
+body.dark-mode .screen :is(.section-subtitle,.search-intro,.market-meta,.account-page-content p,.settings-card-head p){color:var(--bt-muted)}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -2118,6 +2140,7 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
     <section class="section">
       <div class="section-head">
         <h2>Nouveaux matériaux</h2>
+        <p class="section-subtitle">Découvrez les dernières offres ajoutées sur BUILDTRACE.</p>
         <a href="#" onclick="openHomeFeed('new');return false">Voir tout</a>
       </div>
       <div class="feed-grid" id="homeLiveListings"><p class="account-note">Chargement des matériaux récents…</p></div>
@@ -2127,6 +2150,7 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
     <section class="section">
       <div class="section-head">
         <h2>Publications récentes</h2>
+        <p class="section-subtitle">Retrouvez les dernières annonces publiées par les vendeurs.</p>
         <a href="#" onclick="openHomeFeed('recent');return false">Voir tout</a>
       </div>
       <div class="feed-grid" id="homeRecentListings"><p class="account-note">Chargement des publications récentes…</p></div>
@@ -2136,6 +2160,7 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
     <section class="section">
       <div class="section-head">
         <h2>Recommandés pour vous</h2>
+        <p class="section-subtitle">Des matériaux et équipements à découvrir selon vos besoins.</p>
         <a href="#" onclick="openHomeFeed('recommended');return false">Voir tout</a>
       </div>
       <div class="rec-list" id="homeRecommendedListings"><p class="account-note">Chargement des suggestions…</p></div>
@@ -3074,7 +3099,19 @@ async function loadProfile(){
 }
 
 function showSettingsStatus(id,message,kind=''){const node=el(id);if(node){node.textContent=message;node.className='settings-status '+kind;}}
-window.toggleBuildtraceTheme=enabled=>{document.body.classList.toggle('dark-mode',!!enabled);try{localStorage.setItem('buildtrace_theme',enabled?'dark':'light');}catch(_){}const toggle=el('darkThemeToggle');if(toggle)toggle.checked=!!enabled;};
+window.toggleBuildtraceTheme=enabled=>{
+  const dark=!!enabled;
+  document.body.classList.toggle('dark-mode',dark);
+  document.documentElement.style.colorScheme=dark?'dark':'light';
+  try{localStorage.setItem('buildtrace_theme',dark?'dark':'light');}catch(_){}
+  const toggle=el('darkThemeToggle');if(toggle)toggle.checked=dark;
+};
+function restoreBuildtraceTheme(){
+  let saved='light';
+  try{saved=localStorage.getItem('buildtrace_theme')||'light';}catch(_){}
+  window.toggleBuildtraceTheme(saved==='dark');
+}
+restoreBuildtraceTheme();
 window.uploadProfileAvatar=async event=>{const input=event.target,file=input.files&&input.files[0],status=el('avatarUploadStatus');if(!file)return;if(!user){status.textContent='Connectez-vous pour ajouter une photo.';input.value='';return;}const allowed=['image/jpeg','image/png','image/webp'];if(!allowed.includes(file.type)){status.textContent='Format refusé. Utilisez JPG, PNG ou WebP.';input.value='';return;}if(file.size>5*1024*1024){status.textContent='La photo ne doit pas dépasser 5 Mo.';input.value='';return;}status.textContent='Téléversement de la photo…';try{const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=user.id+'/avatar.'+ext;const result=await sb.storage.from('buildtrace-avatars').upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});if(result.error)throw result.error;const publicData=sb.storage.from('buildtrace-avatars').getPublicUrl(path).data;const avatar_url=publicData&&publicData.publicUrl;if(!avatar_url)throw Error('URL de la photo indisponible.');const update=await sb.from('profiles').update({avatar_url:avatar_url,updated_at:new Date().toISOString()}).eq('id',user.id);if(update.error)throw update.error;await loadProfile();status.textContent='Photo de profil mise à jour.';}catch(err){console.error('Photo de profil BUILDTRACE:',err);status.textContent=err.message||'Impossible d’envoyer la photo.';}finally{input.value='';}};
 window.saveProfileSettings=async event=>{event.preventDefault();if(!user){showSettingsStatus('profileEditStatus','Connectez-vous pour modifier votre profil.','error');return false;}const button=el('saveProfileBtn');button.disabled=true;showSettingsStatus('profileEditStatus','Enregistrement en cours…');try{const full_name=el('editFullName').value.trim();if(!full_name)throw Error('Le nom complet est obligatoire.');const payload={full_name,phone:el('editPhone').value.trim()||null,account_type:el('editAccountType').value,company_name:el('editCompany').value.trim()||null,city:el('editCity').value.trim()||null,neighborhood:el('editNeighborhood').value.trim()||null,updated_at:new Date().toISOString()};const {error}=await sb.from('profiles').update(payload).eq('id',user.id);if(error)throw error;await sb.auth.updateUser({data:{full_name}});await loadProfile();showSettingsStatus('profileEditStatus','Vos informations ont été mises à jour.','success');}catch(err){showSettingsStatus('profileEditStatus',err.message||'Impossible de mettre à jour le profil.','error');}finally{button.disabled=false;}return false;};
 window.changeAccountPassword=async event=>{event.preventDefault();const p=el('newPassword').value,c=el('confirmPassword').value;if(p.length<8){showSettingsStatus('securityStatus','Le mot de passe doit contenir au moins 8 caractères.','error');return false;}if(p!==c){showSettingsStatus('securityStatus','Les deux mots de passe ne correspondent pas.','error');return false;}const button=el('changePasswordBtn');button.disabled=true;showSettingsStatus('securityStatus','Mise à jour sécurisée…');try{const {error}=await sb.auth.updateUser({password:p});if(error)throw error;el('passwordForm').reset();showSettingsStatus('securityStatus','Mot de passe mis à jour avec succès.','success');}catch(err){showSettingsStatus('securityStatus',err.message||'Impossible de modifier le mot de passe.','error');}finally{button.disabled=false;}return false;};
