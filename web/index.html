@@ -3111,7 +3111,7 @@ function createHomeListingCard(item,style='prod-card'){
   const tag=document.createElement('span');tag.className='home-card-kind '+(item.listing_type==='rent'?'rental':item.listing_type==='sale'?'sale':'');tag.textContent=kind;photo.append(tag);
   const body=document.createElement('div');body.className='body';
   const title=document.createElement('h3');title.textContent=item.title||'Matériau sans titre';
-  const price=document.createElement('p');price.className='price';price.textContent=formatBuildtraceProductPrice(item);
+  const price=document.createElement('p');price.className='price';price.textContent=formatHomePriceEuro(formatBuildtraceProductPrice(item));
   const meta=document.createElement('p');meta.className='meta';meta.textContent='⌖ '+(item.city||item.location||'Localisation non précisée');
   body.append(title,price,meta);card.append(photo,body);
   card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label','Voir les détails de '+title.textContent);
