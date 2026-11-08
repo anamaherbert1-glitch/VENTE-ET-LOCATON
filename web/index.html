@@ -1742,6 +1742,118 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
 .home-feed-load button:disabled{opacity:.55;cursor:wait}
 .home-feed-load button[hidden]{display:none}
 @media(min-width:768px){.home-feed-content{padding:24px 24px 40px}.home-feed-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
+ 
+/* ===== ACCUEIL BUILDTRACE — DESIGN VALIDÉ ===== */
+#s-home{background:#f8f9fb;color:#1d2939}
+#s-home .home-header{
+  position:relative;background:#fff;color:#172334;padding:15px 16px 13px;
+  box-shadow:none;border-bottom:1px solid #edf0f3;min-height:82px
+}
+#s-home .brand-lockup{display:flex;align-items:center;gap:8px;min-width:0;color:#172334;text-decoration:none}
+#s-home .brand-symbol{width:43px;height:48px;flex:none}
+#s-home .brand-copy{display:flex;flex-direction:column;gap:1px;white-space:nowrap}
+#s-home .brand-copy strong{font-size:21px;line-height:1;font-weight:900;letter-spacing:-.8px}
+#s-home .brand-copy strong span{color:#159b35}
+#s-home .brand-copy small{font-size:10px;font-weight:650;color:#344054;letter-spacing:.05px}
+#s-home .home-actions{gap:8px}
+#s-home .home-header .icon-btn{
+  width:42px;height:42px;border-radius:14px;border:1.5px solid #e0e5eb;
+  background:#f7f8fa;color:#172334;box-shadow:0 1px 2px rgba(16,24,40,.04)
+}
+#s-home .home-header .icon-btn svg{width:22px;height:22px;stroke:currentColor;stroke-width:2.2}
+#s-home .home-header .add-action{background:#13a538;border-color:#13a538;color:#fff;border-radius:50%;width:44px;height:44px}
+#s-home .home-header .message-action{background:#f7f8fa}
+#s-home .count-badge{border-color:#fff;right:-4px;top:-5px}
+#s-home .home-body{max-width:680px;padding:12px 14px 104px;background:#f8f9fb}
+#s-home .home-hero{
+  position:relative;display:flex;align-items:center;min-height:188px;margin:0 0 25px;
+  padding:20px 17px;border-radius:15px;overflow:hidden;color:#fff;
+  background:linear-gradient(90deg,rgba(12,23,39,.96) 0%,rgba(12,23,39,.82) 43%,rgba(12,23,39,.05) 100%),url("https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=85") center 48%/cover no-repeat;
+  box-shadow:0 3px 10px rgba(16,24,40,.12)
+}
+#s-home .home-hero-copy{position:relative;z-index:1;max-width:72%}
+#s-home .home-hero h2{font-size:clamp(21px,5.3vw,29px);line-height:1.12;font-weight:900;letter-spacing:-.7px;margin:0 0 10px;color:#fff}
+#s-home .home-hero h2 span{color:#7ce34b}
+#s-home .home-hero p{font-size:13px;line-height:1.35;color:#f5f7fa;margin:0 0 15px;max-width:260px}
+#s-home .home-hero-copy button{
+  display:inline-flex;align-items:center;gap:12px;height:38px;padding:0 17px;border:0;border-radius:24px;
+  background:#83e34d;color:#102512;font-size:12px;font-weight:850;cursor:pointer
+}
+#s-home .home-hero-copy button span{font-size:19px;line-height:1}
+#s-home .home-hero-dots{position:absolute;z-index:2;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:7px}
+#s-home .home-hero-dots i{display:block;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.75)}
+#s-home .home-hero-dots i.active{width:18px;border-radius:8px;background:#fff}
+#s-home .section{margin:0 0 24px}
+#s-home .section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 11px}
+#s-home .section-head h2{position:relative;padding-left:12px;font-size:17px;line-height:1.2;font-weight:850;letter-spacing:-.35px;color:#202b3b}
+#s-home .section-head h2:before{content:"";position:absolute;left:0;top:1px;bottom:1px;width:4px;border-radius:5px;background:#16a34a}
+#s-home .section-head a{
+  flex:none;display:inline-flex;align-items:center;gap:9px;padding:9px 13px;border-radius:24px;
+  background:#e8f7e7;color:#176b2b;font-size:12px;font-weight:800
+}
+#s-home .section-head a:after{content:"→";font-size:17px;line-height:1}
+#s-home .feed-grid,#s-home .rec-list{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px
+}
+#s-home .feed-grid .prod-card,#s-home .rec-list .rec-item{
+  position:relative;display:flex;flex-direction:column;min-width:0;width:100%;min-height:0;
+  border:1px solid #e6eaf0;border-radius:11px;background:#fff;overflow:hidden;
+  box-shadow:0 2px 6px rgba(16,24,40,.055);cursor:pointer
+}
+#s-home .feed-grid .prod-card .img,#s-home .rec-list .rec-item .img{
+  position:relative;width:100%;height:88px;min-height:88px;flex:none;
+  background:#e8edf1 center/cover no-repeat
+}
+#s-home .feed-grid .prod-card .body,#s-home .rec-list .rec-item .body{
+  display:flex;flex:1;flex-direction:column;align-items:stretch;gap:4px;min-width:0;padding:8px
+}
+#s-home .feed-grid .prod-card h3,#s-home .rec-list .rec-item h3{
+  min-height:30px;font-size:11px;line-height:1.25;font-weight:800;color:#263244;
+  white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical
+}
+#s-home .feed-grid .prod-card .meta,#s-home .rec-list .rec-item .meta{
+  margin:0;font-size:9px;line-height:1.2;font-weight:600;color:#536174;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+#s-home .feed-grid .prod-card .price,#s-home .rec-list .rec-item .price{
+  margin:2px 0 0;font-size:11px;line-height:1.2;font-weight:900;color:#16a334;
+  white-space:normal;overflow-wrap:anywhere
+}
+#s-home .demo-home-badge{top:7px;left:7px;padding:4px 6px;background:#13a538;color:#fff;font-size:9px}
+#s-home .demo-home-note{font-size:8px;line-height:1.2;color:#80611d}
+#s-home .rec-list .rec-item .img{height:88px}
+#s-home .rec-list .rec-item .body{padding:8px}
+#s-home .bn{
+  background:rgba(255,255,255,.98);border-top:1px solid #e7ebef;
+  box-shadow:0 -3px 12px rgba(16,24,40,.04);padding-bottom:max(8px,env(safe-area-inset-bottom))
+}
+#s-home .bn .ni{color:#344054;font-size:10px}
+#s-home .bn .ni.on{color:#159b35}
+#s-home .bn .ni svg{width:23px;height:23px}
+@media(min-width:600px){
+  #s-home .home-body{padding-left:22px;padding-right:22px}
+  #s-home .home-hero{min-height:230px}
+  #s-home .feed-grid,#s-home .rec-list{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  #s-home .feed-grid .prod-card .img,#s-home .rec-list .rec-item .img{height:125px;min-height:125px}
+  #s-home .feed-grid .prod-card h3,#s-home .rec-list .rec-item h3{font-size:13px}
+  #s-home .feed-grid .prod-card .price,#s-home .rec-list .rec-item .price{font-size:13px}
+}
+@media(max-width:370px){
+  #s-home .home-header{padding-left:11px;padding-right:11px}
+  #s-home .brand-symbol{width:36px}
+  #s-home .brand-copy strong{font-size:18px}
+  #s-home .brand-copy small{font-size:9px}
+  #s-home .home-actions{gap:5px}
+  #s-home .home-header .icon-btn{width:37px;height:37px}
+  #s-home .home-header .add-action{width:40px;height:40px}
+  #s-home .home-body{padding-left:10px;padding-right:10px}
+  #s-home .feed-grid,#s-home .rec-list{gap:6px}
+  #s-home .feed-grid .prod-card .img,#s-home .rec-list .rec-item .img{height:76px;min-height:76px}
+  #s-home .feed-grid .prod-card .body,#s-home .rec-list .rec-item .body{padding:6px}
+  #s-home .section-head h2{font-size:15px}
+  #s-home .section-head a{padding:8px 10px;font-size:11px}
+}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -1841,27 +1953,34 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
 <!-- ========== 3.3 ACCUEIL PERSONNALISÉ ========== -->
 <div class="screen" id="s-home">
   <header class="home-header">
-    <div class="brand-wordmark" aria-label="BUILDTRACE"><span class="brand-mark">B</span><span>BUILD<span>TRACE</span></span></div>
+    <a class="brand-lockup" href="#" onclick="go('home');return false" aria-label="BUILDTRACE, accueil">
+      <svg class="brand-symbol" viewBox="0 0 48 48" aria-hidden="true"><path d="M3 43V22l10-7v28H3Z" fill="#16a34a"/><path d="M15 43V10L26 3v40H15Z" fill="#16a34a"/><path d="M28 43V17l8-5v31h-8Z" fill="#172334"/><path d="M39 43V24l6-4v23h-6Z" fill="#172334"/><path d="M8 23l5-4m-5 9 5-4m-5 9 5-4M20 13l5-4m-5 10 5-4m-5 10 5-4m-5 10 5-4" stroke="#fff" stroke-width="1.5" fill="none"/></svg>
+      <span class="brand-copy"><strong>BUILD<span>TRACE</span></strong><small>Construire mieux, ensemble</small></span>
+    </a>
     <div class="home-actions">
-      <button class="icon-btn" type="button" onclick="go('map')" aria-label="Ouvrir la carte" title="Carte">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+      <button class="icon-btn location-action" type="button" onclick="go('map')" aria-label="Ouvrir la carte" title="Carte">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
       </button>
-      <button class="icon-btn" type="button" onclick="openSheet()" aria-label="Créer une publication" title="Créer une publication">
+      <button class="icon-btn add-action" type="button" onclick="openSheet()" aria-label="Créer une publication" title="Créer une publication">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       </button>
-      <button class="icon-btn" type="button" onclick="go('messages')" aria-label="Messages" title="Messages">
-        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 9.5 9.5 0 01-4-.9L3 21l1.8-4.5a8 8 0 01-1.3-4.3 8.5 8.5 0 018.8-8.2 8.5 8.5 0 018.7 7.5Z"/><path d="m7.5 13 3-3 2.5 2 3.5-3"/></svg>
+      <button class="icon-btn message-action" type="button" onclick="go('messages')" aria-label="Messages" title="Messages">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.5 9.5 0 0 1-4-.9L3 21l1.8-4.5a8 8 0 0 1-1.3-4.3 8.5 8.5 0 0 1 8.8-8.2 8.5 8.5 0 0 1 8.7 7.5Z"/><path d="M8 12h8M8 15h5"/></svg>
         <span class="count-badge">2</span>
       </button>
     </div>
   </header>
 
   <div class="home-body">
-    <!-- Espace publicitaire de la plateforme -->
-    <div class="home-ad-slot ad-carousel" id="homeAdCarousel" role="region" aria-label="Publicités BUILDTRACE">
-      <span class="ad-label">PUBLICITÉ</span><div class="ad-copy"><strong id="adTitle">Les solutions pour vos chantiers</strong><small id="adDescription">Découvrez les matériaux et équipements près de chez vous.</small></div>
-      <div class="ad-controls"><button type="button" onclick="changeAd(-1)" aria-label="Publicité précédente">‹</button><span id="adDots"></span><button type="button" onclick="changeAd(1)" aria-label="Publicité suivante">›</button></div>
-    </div>
+    <!-- Bannière d'accueil BUILDTRACE -->
+    <section class="home-hero" aria-label="Présentation de BUILDTRACE">
+      <div class="home-hero-copy">
+        <h2>Trouvez. Achetez.<br>Construisez <span>mieux.</span></h2>
+        <p>Matériaux et équipements de construction à portée de main</p>
+        <button type="button" onclick="go('market')">Explorer la marketplace <span aria-hidden="true">→</span></button>
+      </div>
+      <div class="home-hero-dots" aria-hidden="true"><i class="active"></i><i></i><i></i><i></i></div>
+    </section>
 
     <!-- Publications de matériaux : grille 2 colonnes -->
     <section class="section">
