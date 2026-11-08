@@ -1969,6 +1969,23 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
  #s-home #homeLiveListings>.prod-card{flex-basis:30%;width:30%;min-width:30%;max-width:30%}
 }
 
+/* Étape 3 — carrousel horizontal Publications récentes */
+#s-home #homeRecentListings{
+ display:flex;flex-wrap:nowrap;flex-direction:row;gap:10px;
+ overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;
+ scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+ scrollbar-width:none;padding:2px 2px 9px;
+}
+#s-home #homeRecentListings::-webkit-scrollbar{display:none}
+#s-home #homeRecentListings>.prod-card{
+ flex:0 0 42%;width:42%;min-width:42%;max-width:42%;
+ scroll-snap-align:start;
+}
+#s-home #homeRecentListings>.account-note{flex:0 0 100%;width:100%}
+#s-home #homeRecentListings .prod-card .price{color:#16a34a!important;font-weight:900}
+@media(min-width:520px){
+ #s-home #homeRecentListings>.prod-card{flex-basis:30%;width:30%;min-width:30%;max-width:30%}
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -2106,7 +2123,7 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
       <div class="feed-grid" id="homeLiveListings"><p class="account-note">Chargement des matériaux récents…</p></div>
     </section>
 
-    <!-- Publications récentes : grille 2 colonnes -->
+    <!-- Publications récentes : carrousel horizontal -->
     <section class="section">
       <div class="section-head">
         <h2>Publications récentes</h2>
