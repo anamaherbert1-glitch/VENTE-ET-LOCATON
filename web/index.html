@@ -2916,8 +2916,8 @@ function createDemoHomeCard(source,style='prod-card'){
   const note=document.createElement('span');note.className='demo-home-note';note.textContent='Publication de démonstration';
   body.append(title,meta,price,note);card.append(photo,body);
   card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label','Voir la publication de démonstration '+name);
-  const demoProduct={title:name,price:priceText,location:'Lomé',listing_type:kind,condition:metaText.replace(/^⌖\\s*Lomé\\s*·?\\s*/,'')||'Non précisé',description:'Cette publication est un exemple de démonstration. Elle ne correspond pas à une annonce réelle publiée par un vendeur.',photo_urls:[]};
-  const imageMatch=background.match(/url\\(["']?(.*?)["']?\\)/i);if(imageMatch?.[1]&&/^https:\\/\\//i.test(imageMatch[1]))demoProduct.photo_urls=[imageMatch[1]];
+  const demoProduct={title:name,price:priceText,location:'Lomé',listing_type:kind,condition:metaText.replace(/^⌖\s*Lomé\s*·?\s*/,'')||'Non précisé',description:'Cette publication est un exemple de démonstration. Elle ne correspond pas à une annonce réelle publiée par un vendeur.',photo_urls:[]};
+  const imageMatch=background.match(/url\(["']?(.*?)["']?\)/i);if(imageMatch?.[1]&&/^https:\/\//i.test(imageMatch[1]))demoProduct.photo_urls=[imageMatch[1]];
   const open=()=>window.openMarketProduct(name,priceText,(kind==='rent'?'À louer':'À vendre')+' · Lomé',demoProduct);
   card.addEventListener('click',open);card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}});
   return card;
