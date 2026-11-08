@@ -81,6 +81,8 @@ body{
 .home-header{background:var(--navy);color:#fff;padding:12px 16px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 3px 12px rgba(4,17,39,.15)}
 .home-header .icon-btn{position:relative;display:grid;place-items:center;flex:none;width:40px;height:40px;padding:0;border:1.8px solid rgba(255,255,255,.78);border-radius:50%;background:transparent;box-shadow:none;cursor:pointer;transition:background-color .18s ease,border-color .18s ease}.home-header .icon-btn:focus-visible{outline:2px solid #00d957;outline-offset:3px}.home-header .icon-btn:active{background:rgba(255,255,255,.14)}.home-header .icon-btn svg{fill:none;stroke:#fff;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round}.bn .ni svg{fill:none;stroke:#536477;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 0.4px currentColor)}.bn .ni.on svg{stroke:#079b4c;stroke-width:2.35}.bn .ni{font-weight:650}.bn .ni:not(.on){color:#46566a}
 .brand-wordmark{display:flex;align-items:center;gap:8px;color:#fff;font-size:20px;font-weight:900;letter-spacing:-.6px;white-space:nowrap}.brand-wordmark>span:last-child>span{color:#00d957}.brand-mark{width:32px;height:32px;display:grid;place-items:center;border:2px solid #00d957;border-radius:9px 3px 9px 3px;color:#fff;font-size:19px;font-weight:900;transform:skewY(-5deg)}.home-actions{display:flex;gap:9px;flex-shrink:0}.icon-btn{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.13)}.icon-btn svg{width:21px;height:21px;stroke-width:2}.count-badge{position:absolute;right:-3px;top:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:10px;background:#ed354b;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;border:1.5px solid var(--navy)}.feed-composer{display:flex;align-items:center;gap:10px;padding:3px 0 13px;margin-bottom:12px;border-bottom:1px solid #dfe5ec}.feed-composer .avatar{background:#355a7d}.composer-prompt{height:42px;flex:1;text-align:left;padding:0 15px;border:1.5px solid #d8dee7;border-radius:24px;background:#fff;color:#536174;font-size:13px;font-weight:500}.composer-photo{width:38px;height:38px;border:0;background:transparent;color:#16894b;display:grid;place-items:center}.composer-photo svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.demo-home-badge{position:absolute;top:7px;left:7px;z-index:1;padding:4px 7px;border-radius:6px;background:#fff1c2;color:#765000;font-size:9px;font-weight:900;letter-spacing:.5px;box-shadow:0 1px 4px rgba(0,0,0,.16)}
+.demo-home-note{display:inline-block;margin-top:5px;color:#87651a;font-size:9px;font-weight:750}
 .feed-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .feed-grid .prod-card{min-width:0;width:100%;flex:auto;border-radius:13px}
 .feed-grid .prod-card .img{height:112px}
@@ -2897,10 +2899,41 @@ async function openHomeFeed(mode){
   setupHomeFeedInfiniteScroll();
 }
 window.openHomeFeed=openHomeFeed;
+function createDemoHomeCard(source,style='prod-card'){
+  const name=source.dataset.name||source.querySelector('.market-card-body h3')?.textContent||'Publication de démonstration';
+  const priceText=source.querySelector('.market-price')?.textContent||'Prix à confirmer';
+  const metaText=source.querySelector('.market-meta')?.textContent||'Lomé';
+  const kind=source.dataset.kind==='rent'?'rent':'sale';
+  const photoSource=source.querySelector('.market-card-photo');
+  const background=photoSource?getComputedStyle(photoSource).backgroundImage:'';
+  const card=document.createElement('article');card.className=style;card.dataset.demoListing='true';
+  const photo=document.createElement('div');photo.className='img';photo.style.backgroundImage=background;
+  const demoBadge=document.createElement('span');demoBadge.className='demo-home-badge';demoBadge.textContent='DÉMO';photo.append(demoBadge);
+  const body=document.createElement('div');body.className='body';
+  const title=document.createElement('h3');title.textContent=name;
+  const meta=document.createElement('p');meta.className='meta';meta.textContent=(kind==='rent'?'À louer':'À vendre')+' · Lomé';
+  const price=document.createElement('p');price.className='price';price.textContent=priceText;
+  const note=document.createElement('span');note.className='demo-home-note';note.textContent='Publication de démonstration';
+  body.append(title,meta,price,note);card.append(photo,body);
+  card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label','Voir la publication de démonstration '+name);
+  const demoProduct={title:name,price:priceText,location:'Lomé',listing_type:kind,condition:metaText.replace(/^⌖\\s*Lomé\\s*·?\\s*/,'')||'Non précisé',description:'Cette publication est un exemple de démonstration. Elle ne correspond pas à une annonce réelle publiée par un vendeur.',photo_urls:[]};
+  const imageMatch=background.match(/url\\(["']?(.*?)["']?\\)/i);if(imageMatch?.[1]&&/^https:\\/\\//i.test(imageMatch[1]))demoProduct.photo_urls=[imageMatch[1]];
+  const open=()=>window.openMarketProduct(name,priceText,(kind==='rent'?'À louer':'À vendre')+' · Lomé',demoProduct);
+  card.addEventListener('click',open);card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}});
+  return card;
+}
+function renderDemoHomeListings(){
+  const sources=[...document.querySelectorAll('#marketGrid .market-card:not([data-live-listing="true"])')].slice(0,6);
+  const home=el('homeLiveListings'),recent=el('homeRecentListings'),recommended=el('homeRecommendedListings');
+  [home,recent,recommended].forEach(grid=>grid?.querySelectorAll('[data-demo-listing="true"]').forEach(card=>card.remove()));
+  if(home)sources.forEach(source=>home.append(createDemoHomeCard(source,'prod-card')));
+  if(recent)sources.slice(0,4).forEach(source=>recent.append(createDemoHomeCard(source,'prod-card')));
+  if(recommended)sources.slice(0,4).forEach(source=>recommended.append(createDemoHomeCard(source,'rec-item')));
+}
 async function loadListings(){
   homeFeedOffset=0;homeFeedHasMore=false;homeFeedLoading=false;
   const {data,error}=await sb.from('public_products').select('*').order('created_at',{ascending:false}).range(0,HOME_FEED_PAGE_SIZE-1);
-  if(error){console.error('Produits BUILDTRACE:',error);homeFeedListings=[];renderHomeFeed(window.activeHomeFeedMode||'new');return;}
+  if(error){console.error('Produits BUILDTRACE:',error);homeFeedListings=[];renderDemoHomeListings();renderHomeFeed(window.activeHomeFeedMode||'new');return;}
   homeFeedListings=(data||[]).map(normalizeBuildtraceProduct).filter(Boolean);
   homeFeedOffset=(data||[]).length;
   homeFeedHasMore=(data||[]).length===HOME_FEED_PAGE_SIZE;
