@@ -2978,9 +2978,7 @@ async function loadListings(){
   });
   const sorted=homeFeedListings||[];
   sorted.slice(0,4).forEach(item=>{if(recent)recent.append(createHomeListingCard(item));if(recommended)recommended.append(createHomeListingCard(item,'rec-item'));});
-  if(home&&!sorted.length)home.innerHTML='<p class="account-note">Aucune annonce publiée pour le moment.</p>';
-  if(recent&&!sorted.length)recent.innerHTML='<p class="account-note">Aucune publication récente.</p>';
-  if(recommended&&!sorted.length)recommended.innerHTML='<p class="account-note">Aucune suggestion disponible pour le moment.</p>';
+  renderDemoHomeListings();
   if(document.getElementById('s-home-feed')?.classList.contains('active'))renderHomeFeed(window.activeHomeFeedMode||'new');
   if(window.filterMarketplace)window.filterMarketplace();
 }
