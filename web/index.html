@@ -1950,6 +1950,25 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
 }
 @media(max-width:360px){#s-home .home-actions{gap:13px}}
 
+
+/* Étape 2 — carrousel horizontal Nouveaux matériaux */
+#s-home #homeLiveListings{
+ display:flex;flex-wrap:nowrap;flex-direction:row;gap:10px;
+ overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;
+ scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+ scrollbar-width:none;padding:2px 2px 9px;
+}
+#s-home #homeLiveListings::-webkit-scrollbar{display:none}
+#s-home #homeLiveListings>.prod-card{
+ flex:0 0 42%;width:42%;min-width:42%;max-width:42%;
+ scroll-snap-align:start;
+}
+#s-home #homeLiveListings>.account-note{flex:0 0 100%;width:100%}
+#s-home #homeLiveListings .prod-card .price{color:#16a34a!important;font-weight:900}
+@media(min-width:520px){
+ #s-home #homeLiveListings>.prod-card{flex-basis:30%;width:30%;min-width:30%;max-width:30%}
+}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -2078,7 +2097,7 @@ body.dark-mode .detail-location-map p{color:#c0cbc3}
       <div class="home-hero-dots" aria-hidden="true"><i class="active"></i><i></i><i></i><i></i></div>
     </section>
 
-    <!-- Publications de matériaux : grille 2 colonnes -->
+    <!-- Nouveaux matériaux : carrousel horizontal -->
     <section class="section">
       <div class="section-head">
         <h2>Nouveaux matériaux</h2>
@@ -2897,6 +2916,17 @@ function normalizeBuildtraceProduct(row){
     dimensions:row.dimensions||''
   };
 }
+
+function formatHomePriceEuro(value){
+  const raw=String(value??'').trim();
+  if(!raw)return 'Prix à confirmer';
+  const numbers=[...raw.matchAll(/[0-9][0-9\s.,]*/g)].map(m=>Number(m[0].replace(/[\s.]/g,'').replace(',','.'))).filter(n=>Number.isFinite(n)&&n>0);
+  if(!numbers.length)return raw.replace(/FCFA|F\s*CFA|XOF/gi,'€').trim();
+  const converted=numbers.map(n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(n/655.957));
+  let index=0;
+  return raw.replace(/[0-9][0-9\s.,]*/g,()=>converted[index++]||'').replace(/FCFA|F\s*CFA|XOF/gi,'').replace(/\s+\/\s+/g,' / ').replace(/\s{2,}/g,' ').trim();
+}
+
 function formatBuildtraceProductPrice(item){
   const sale=item.sale_price_xof;
   const rental=item.rental_price_xof;
@@ -3130,7 +3160,7 @@ function createDemoHomeCard(source,style='prod-card'){
   const kindTag=document.createElement('span');kindTag.className='home-card-kind '+(kind==='rent'?'rental':'sale');kindTag.textContent=kind==='rent'?'Location':(name.toLowerCase().includes('brique')||name.toLowerCase().includes('ciment')||name.toLowerCase().includes('planche')?'Neuf':'Vente');photo.append(kindTag);
   const body=document.createElement('div');body.className='body';
   const title=document.createElement('h3');title.textContent=name;
-  const price=document.createElement('p');price.className='price';price.textContent=priceText;
+  const price=document.createElement('p');price.className='price';price.textContent=formatHomePriceEuro(priceText);
   const meta=document.createElement('p');meta.className='meta';meta.textContent='⌖ Lomé';
   body.append(title,price,meta);card.append(photo,body);
   card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label','Voir la publication de démonstration '+name);
@@ -3187,7 +3217,7 @@ async function loadListings(){
       const homeBody=document.createElement('div');homeBody.className='body';
       const homeTitle=document.createElement('h3');homeTitle.textContent=item.title;
       const homeMeta=document.createElement('p');homeMeta.className='meta';homeMeta.textContent=kindLabel+' · '+item.location;
-      const homePrice=document.createElement('p');homePrice.className='price';homePrice.textContent=priceText;
+      const homePrice=document.createElement('p');homePrice.className='price';homePrice.textContent=formatHomePriceEuro(priceText);
       homeBody.append(homeTitle,homeMeta,homePrice);homeCard.append(homePhoto,homeBody);
       homeCard.setAttribute('role','button');homeCard.setAttribute('tabindex','0');homeCard.setAttribute('aria-label','Voir les détails de '+item.title);
       homeCard.addEventListener('click',open);homeCard.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}});
